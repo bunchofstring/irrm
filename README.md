@@ -73,8 +73,7 @@ SELL rule:
 4. Positions may be held overnight.
 
 ## 5. State: the dashboard database (persists between days)
-Dashboard artifact: https://claude.ai/artifact/TXdYFFTGfARVzCL1snAGrG
-Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with that url.
+Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with the artifact url.
 - At the start, `get` collection "bot", docs "state" (main), "state_early" (early) and "state_regime" (regime). Fields: symbol, phase ("paper"), balance, principal (5.00), realized_pnl, position (null or object below), check_count, consecutive_errors (main doc only), updated_at. Keep each doc's `version` and pass it as `if_version` on every write; use the new version each write returns. If a write fails on version, re-read and redo it. If "state_regime" does not exist yet, create it (no if_version) with symbol "CBRS", phase "paper", balance 5.00, principal 5.00, realized_pnl 0, position null, check_count 0, last_sell_time null, last_used_signal_bar null.
 - position object: {shares, cost_price, cost_basis, entry_time, peak_price, last_bid, stop_price, stop_reason ("initial"|"breakeven"|"breakeven_plus"|"trailing"|"principal"), stops: {initial, breakeven (null until active), breakeven_plus (null until active), trailing, principal_floor (null unless active)}, realized_pnl_before_trade, entry_bar_end (ISO time of the crossover bar's end)}
 - Regime position object: {shares, cost_price, cost_basis, entry_time, mode ("trend"|"bounce"), atr_at_entry, peak_price, last_bid, stop_price, stop_reason ("initial"|"trailing"), stops: {initial, trailing, take_profit (null in trend mode)}, entry_bar_end (ISO time of the signal bar's end)}

@@ -90,8 +90,11 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 - Open positions are held overnight; nothing is sold just because the day ends.
 
 ## 7. Data for each check (fetched once, used by all strategies)
-- get_equity_quotes for the target ticker: bid, ask, last price, timestamps.
-- get_equity_historicals for the target ticker with 5-minute bars including open, high, low and close, regular-hours bars only (6:30am–1:00pm Pacific), enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed). Load the Robinhood tool schemas with ToolSearch first.
+- Required data for the target ticker, from any read-only market-data tool available in the session (for example Massive, or Robinhood if its tools are present; no single provider is required):
+  - Current quote: bid, ask, last price, and timestamps.
+  - 5-minute bars including open, high, low and close, regular-hours bars only (6:30am–1:00pm Pacific), enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed).
+- Load the schemas of whichever data tool(s) you use with ToolSearch first. Use only read tools (quotes, historicals, search) from that provider.
+- If no available tool can supply the required data, or the data it supplies is missing, stale or contradictory, treat it as missing data under guardrail 4 and section 10.
 - Compute MACD in Python (Bash) from closing prices of COMPLETED 5-minute bars only: MACD line = EMA12 − EMA26; signal = 9-period EMA of the MACD line; histogram = MACD − signal. Use standard EMAs (alpha = 2/(n+1)). A bullish crossover on the latest completed bar = previous bar MACD ≤ signal AND this bar MACD > signal.
 - Also compute, from the same COMPLETED bars: EMA200 = 200-period EMA of closes (alpha = 2/201, seeded with the first close fetched); RSI14 = Wilder's RSI of closes (average the first 14 gains and losses, then smooth each as (previous × 13 + new) ÷ 14); ATR14 = simple average of the true range of the last 14 completed bars, where true range = max(high − low, |high − previous close|, |low − previous close|).
 

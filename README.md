@@ -86,7 +86,7 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 ## 6. Market hours and pacing
 - Regular hours: weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Check the time with `TZ=America/Los_Angeles date` in Bash.
 - Market holiday: if by 6:45am CBRS's quote has no trade timestamp from today, log one line "MARKET CLOSED (holiday) — no action" in all three line arrays, post it, and end the run.
-- Loop: record the start time of each check; after finishing, sleep in Bash until start + 234 seconds (minimum 10s). Keep looping until 1:00pm Pacific, then run the end-of-day step.
+- Loop: run this task with the `/loop 3.9m` command so each check fires every 3.9 minutes. Do not use Bash `sleep` or any other wait to pace checks. Keep looping until 1:00pm Pacific, then run the end-of-day step.
 - Open positions are held overnight; nothing is sold just because the day ends.
 
 ## 7. Data for each check (fetched once, used by all strategies)

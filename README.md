@@ -51,7 +51,7 @@ SELL rule:
 ### 2. “Early” shadow strategy
 
 Buy any bullish crossover, even below zero. State doc: bot/state_early
-Same rules and parameters as Donovan’s original, including the end-of-day liquidation, except the buy rule is different. Buy when the latest completed bar has a bullish crossover (MACD may be above or below zero).
+Same rules and parameters as Donovan’s original, except the buy rule is different. Buy when the latest completed bar has a bullish crossover (MACD may be above or below zero).
 
 ### 3. "Regime switch" (paper experiment)
 

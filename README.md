@@ -24,7 +24,7 @@ The following run side by side on the SAME data at every check, each with its ow
 ## 4. Curated Strategies.
 The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. /loop every 3.9m until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
 
-**End-of-day liquidation (all three strategies):** No strategy holds a position overnight. At the last check before the 1:00pm Pacific close, if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L.
+**End-of-day liquidation:** No strategy holds a position overnight. At the last check before the 1:00pm Pacific close, if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L.
 
 ### 1. "Donovan's original"
 
@@ -46,7 +46,7 @@ SELL rule:
 - stop_price = the highest active level, and never lower than the previous stop_price (it only moves up)
 - stop_reason = whichever level set it. Do NOT tighten for any other reason (no MACD-based tightening)
 3. SELL when the current BID ≤ stop_price. Fill at the current bid. proceeds = shares × bid; pnl = proceeds − cost_basis; balance = proceeds; realized_pnl += pnl; position = null; last_sell_time = now. If bid < stop_price by more than one cent, mark gap = true and log "GAP".
-4. End-of-day liquidation applies (see Section 4).
+4. End-of-day liquidation applies.
 
 ### 2. “Early” shadow strategy
 
@@ -73,7 +73,7 @@ SELL rule:
 - BOUNCE: initial = cost_price − 1 × atr_at_entry; trailing = peak_price − 3 × atr_at_entry; take_profit = cost_price + 2 × atr_at_entry.
 - stop_price = the higher of initial and trailing, never lower than the previous stop_price (it only moves up); stop_reason = whichever level set it.
 3. SELL when the current BID ≤ stop_price (reason = stop_reason), or, in BOUNCE mode, when the current BID ≥ take_profit (reason "take_profit"). Fill at the current bid, with the same bookkeeping as Donovan's original (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now, GAP rule on stop exits).
-4. End-of-day liquidation applies (see Section 4). Positions are not held overnight.
+4. End-of-day liquidation applies. Positions are not held overnight.
 
 ## 5. State: the dashboard database (persists between days)
 Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with the artifact url.

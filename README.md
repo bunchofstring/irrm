@@ -24,6 +24,8 @@ The following run side by side on the SAME data at every check, each with its ow
 ## 4. Curated Strategies.
 The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. /loop every 3.9m until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
 
+**End-of-day liquidation (all three strategies):** No strategy holds a position overnight. At the last check before the 1:00pm Pacific close, if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L.
+
 ### 1. "Donovan's original"
 
 MACD above zero + bullish crossover. State doc: bot/state. One position at a time. Never add to an open position.
@@ -44,11 +46,12 @@ SELL rule:
 - stop_price = the highest active level, and never lower than the previous stop_price (it only moves up)
 - stop_reason = whichever level set it. Do NOT tighten for any other reason (no MACD-based tightening)
 3. SELL when the current BID ≤ stop_price. Fill at the current bid. proceeds = shares × bid; pnl = proceeds − cost_basis; balance = proceeds; realized_pnl += pnl; position = null; last_sell_time = now. If bid < stop_price by more than one cent, mark gap = true and log "GAP".
+4. End-of-day liquidation applies (see Section 4).
 
 ### 2. “Early” shadow strategy
 
 Buy any bullish crossover, even below zero. State doc: bot/state_early
-Same rules and parameters as Donovan’s original, except the buy rule is different. Buy when the latest completed bar has a bullish crossover (MACD may be above or below zero).
+Same rules and parameters as Donovan’s original, including the end-of-day liquidation, except the buy rule is different. Buy when the latest completed bar has a bullish crossover (MACD may be above or below zero).
 
 ### 3. "Regime switch" (paper experiment)
 
@@ -70,7 +73,7 @@ SELL rule:
 - BOUNCE: initial = cost_price − 1 × atr_at_entry; trailing = peak_price − 3 × atr_at_entry; take_profit = cost_price + 2 × atr_at_entry.
 - stop_price = the higher of initial and trailing, never lower than the previous stop_price (it only moves up); stop_reason = whichever level set it.
 3. SELL when the current BID ≤ stop_price (reason = stop_reason), or, in BOUNCE mode, when the current BID ≥ take_profit (reason "take_profit"). Fill at the current bid, with the same bookkeeping as Donovan's original (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now, GAP rule on stop exits).
-4. Positions may be held overnight.
+4. End-of-day liquidation applies (see Section 4). Positions are not held overnight.
 
 ## 5. State: the dashboard database (persists between days)
 Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with the artifact url.
@@ -87,7 +90,7 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 - Regular hours: weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Check the time with `TZ=America/Los_Angeles date` in Bash.
 - Market holiday: if by 6:45am CBRS's quote has no trade timestamp from today, log one line "MARKET CLOSED (holiday) — no action" in all three line arrays, post it, and end the run.
 - Loop: run this task with the `/loop 3.9m` command so each check fires every 3.9 minutes. Do not use Bash `sleep` or any other wait to pace checks. Keep looping until 1:00pm Pacific, then run the end-of-day step.
-- Open positions are held overnight; nothing is sold just because the day ends.
+- No position is held overnight: every open position is liquidated at the last check before the 1:00pm close (see Section 4).
 
 ## 7. Data for each check (fetched once, used by all strategies)
 - Required data for the target ticker, from any read-only market-data tool available in the session (for example Massive, or Robinhood if its tools are present; no single provider is required):
@@ -108,7 +111,7 @@ Update each state doc: check_count, updated_at (ISO UTC), position (with all sto
 ## 9. End-of-day summary (after the 1:00pm Pacific close)
 Write it into today's day doc `summary` field and make it your final message:
 - Head-to-head: for each active strategy, display today's trades (times, prices, reasons), wins/losses, today's P&L, total realized P&L since the start, and balance. Say which strategy is ahead overall and by how much.
-- For each strategy with a position held overnight: shares, cost, peak, closing bid, and STOP-LOSS TRIGGERS: the price of each level (initial, breakeven and breakeven_plus if active, trailing, principal floor if active; for Regime switch: mode, initial, trailing and take-profit if bounce), which one is active, the exact sell-trigger price, and its distance in $ and % below the closing bid. If the closing bid is already at or below the active stop, say clearly that the position will be sold at the next open.
+- For each strategy's end-of-day liquidation: time, shares, bid, proceeds and P&L. Since no position is held overnight, state that each strategy is flat at the close.
 - For a strategy with no position: say so, and whether it is approaching a buy signal.
 
 ## 10. Errors

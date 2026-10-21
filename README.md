@@ -51,7 +51,9 @@ SELL rule:
 ### 2. “Early” shadow strategy
 
 Buy any bullish crossover, even below zero. State doc: bot/state_early
-Same rules and parameters as Donovan’s original, except the buy rule is different. Buy when the latest completed bar has a bullish crossover (MACD may be above or below zero).
+Same rules and parameters as Donovan’s original, except the buy rule is different:
+1. BUY when the latest completed bar has a bullish crossover (MACD may be above or below zero).
+2. End-of-day liquidation applies.
 
 ### 3. "Regime switch" (paper experiment)
 
@@ -90,7 +92,6 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 - Regular hours: weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Check the time with `TZ=America/Los_Angeles date` in Bash.
 - Market holiday: if by 6:45am CBRS's quote has no trade timestamp from today, log one line "MARKET CLOSED (holiday) — no action" in all three line arrays, post it, and end the run.
 - Loop: run this task with the `/loop 3.9m` command so each check fires every 3.9 minutes. Do not use Bash `sleep` or any other wait to pace checks. Keep looping until 1:00pm Pacific, then run the end-of-day step.
-- No position is held overnight: every open position is liquidated at the last check before the 1:00pm close (see Section 4).
 
 ## 7. Data for each check (fetched once, used by all strategies)
 - Required data for the target ticker, from any read-only market-data tool available in the session (for example Massive, or Robinhood if its tools are present; no single provider is required):
@@ -110,8 +111,9 @@ Update each state doc: check_count, updated_at (ISO UTC), position (with all sto
 
 ## 9. End-of-day summary (after the 1:00pm Pacific close)
 Write it into today's day doc `summary` field and make it your final message:
+- Display an interactive P&L chart with a labeled line for each active strategy. The paper trading record should be cumulative up to the time of the report. The chart should be able to display different data ranges: 1d, 1w, 1m, 1y, 5y, all. This means trading records for each strategy must be stored so that future sessions can access them. The latest chart should be visible in the dashboard database artifact.
 - Head-to-head: for each active strategy, display today's trades (times, prices, reasons), wins/losses, today's P&L, total realized P&L since the start, and balance. Say which strategy is ahead overall and by how much.
-- For each strategy's end-of-day liquidation: time, shares, bid, proceeds and P&L. Since no position is held overnight, state that each strategy is flat at the close.
+- For each strategy: time, shares, bid, proceeds and P&L.
 - For a strategy with no position: say so, and whether it is approaching a buy signal.
 
 ## 10. Errors

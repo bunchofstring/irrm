@@ -50,7 +50,7 @@ SELL rule:
 2. Each check: peak_price = max(peak_price, current bid). Compute these levels:
 - initial = cost_price − min(1% of cost_price, $1.00 ÷ shares)  [the $1 cap is per position; on positions under $100 the 1% is smaller]
 - breakeven = cost_price, active once peak_price > cost_price (the bid has risen above cost at any point since purchase)
-- breakeven_plus = cost_price × 1.0025 (cost +0.25%), active once peak_price ≥ cost_price × 1.005 (the bid has been at least +0.5% above cost). This cushion offsets slippage when the price gaps through the stop.
+- breakeven_plus = cost_price × 1.0025 (cost +0.25%), active once peak_price ≥ cost_price × 1.005 (the bid has been at least +0.5% above cost). Why the extra 0.25%: when the price falls fast, the stop can sell for a little less than its stop price. Setting the stop slightly above what we paid means a sale that lands a bit low should still come out at about break-even instead of a loss.
 - trailing = peak_price × 0.98
 - principal_floor = principal ÷ shares, active only if realized_pnl_before_trade > 0
 - stop_price = the highest active level, and never lower than the previous stop_price (it only moves up)

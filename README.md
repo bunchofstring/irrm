@@ -22,9 +22,17 @@ The following run side by side on the SAME data at every check, each with its ow
 3. CBRS using the regime switch strategy
 
 ## 4. Curated Strategies.
-The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. /loop every 3.9m until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
+The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Run a check on the fixed schedule in section 6 until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
 
-**End-of-day liquidation:** No strategy holds a position overnight. At the last check before the 1:00pm Pacific close, if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L.
+**End-of-day liquidation:** No strategy holds a position overnight. At the last check before the 1:00pm Pacific close, if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L. If that last check was missed and a position is still open after 1:00pm, the first run after the close sells it at the 1:00pm regular-session closing price, with reason "EOD liquidation (late)".
+
+**Resting stop-loss orders (paper):** Every paper BUY places a resting stop-loss order at the same moment as the buy, so a stop is never missed because a check ran late or not at all. The order is simulated: it exists only as `stop_order` in the position object in the dashboard database. Guardrail 3 still applies: never call a broker order tool to place, change or cancel it.
+- At the BUY: compute the position's starting stop_price and stop_reason from the strategy's SELL rule (as if it were the first check) and record stop_order = {type: "stop", trigger: stop_price, placed_at: entry_time, modified_at: entry_time}.
+- At each check, after the fill test below, recompute the stop levels from the current bid as the SELL rule describes. When stop_price rises, raise the trigger to match and set modified_at = now. The trigger never moves down.
+- Fill test, first thing in every check for each open position: fetch 1-minute regular-hours bars from stop_order.modified_at up to now. The stop fills on the first bar whose low ≤ trigger. Fill price = the trigger, or that bar's open if the bar opened below the trigger (the price gapped through the stop). Exit time = that bar's start time. If no bar shows a fill yet but the current bid ≤ trigger, it fills at the trigger now.
+- Bookkeeping is the strategy's stop exit with the fill price in place of the bid, last_sell_time = exit time, and the trade doc's ts = exit time. If the fill is below the trigger by more than one cent, mark gap = true and log "GAP".
+- Between checks the trigger stays at the level set by the last check, so a missed or late check still fills the stop at the right price on the next check.
+- If 1-minute bars are unavailable or stale, treat it as missing data (guardrail 4): take no new BUYs, but still sell any position whose current bid ≤ trigger at the bid, and log why.
 
 ### 1. "Donovan's original"
 
@@ -40,12 +48,12 @@ SELL rule:
 2. Each check: peak_price = max(peak_price, current bid). Compute these levels:
 - initial = cost_price − min(1% of cost_price, $1.00 ÷ shares)  [the $1 cap is per position; on positions under $100 the 1% is smaller]
 - breakeven = cost_price, active once peak_price > cost_price (the bid has risen above cost at any point since purchase)
-- breakeven_plus = cost_price × 1.0025 (cost +0.25%), active once peak_price ≥ cost_price × 1.005 (the bid has been at least +0.5% above cost). This cushion offsets the slippage from checking every 3.9 minutes and selling at the bid.
+- breakeven_plus = cost_price × 1.0025 (cost +0.25%), active once peak_price ≥ cost_price × 1.005 (the bid has been at least +0.5% above cost). This cushion offsets slippage when the price gaps through the stop.
 - trailing = peak_price × 0.98
 - principal_floor = principal ÷ shares, active only if realized_pnl_before_trade > 0
 - stop_price = the highest active level, and never lower than the previous stop_price (it only moves up)
 - stop_reason = whichever level set it. Do NOT tighten for any other reason (no MACD-based tightening)
-3. SELL when the current BID ≤ stop_price. Fill at the current bid. proceeds = shares × bid; pnl = proceeds − cost_basis; balance = proceeds; realized_pnl += pnl; position = null; last_sell_time = now. If bid < stop_price by more than one cent, mark gap = true and log "GAP".
+3. stop_price is the trigger of the position's resting stop-loss order (see "Resting stop-loss orders" above). SELL when that order fills, at its fill price. proceeds = shares × fill price; pnl = proceeds − cost_basis; balance = proceeds; realized_pnl += pnl; position = null; last_sell_time = exit time. If the fill is below the trigger by more than one cent, mark gap = true and log "GAP".
 4. End-of-day liquidation applies.
 
 ### 2. “Early” shadow strategy
@@ -74,15 +82,15 @@ SELL rule:
 - TREND: initial = cost_price − 1.5 × atr_at_entry; trailing = peak_price − 4 × atr_at_entry; no take-profit.
 - BOUNCE: initial = cost_price − 1 × atr_at_entry; trailing = peak_price − 3 × atr_at_entry; take_profit = cost_price + 2 × atr_at_entry.
 - stop_price = the higher of initial and trailing, never lower than the previous stop_price (it only moves up); stop_reason = whichever level set it.
-3. SELL when the current BID ≤ stop_price (reason = stop_reason), or, in BOUNCE mode, when the current BID ≥ take_profit (reason "take_profit"). Fill at the current bid, with the same bookkeeping as Donovan's original (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now, GAP rule on stop exits).
+3. SELL when the resting stop-loss order fills (reason = stop_reason, fill price and GAP rule as in "Resting stop-loss orders" above), or, in BOUNCE mode, when the current BID ≥ take_profit at a check (reason "take_profit", fill at the current bid). Use the same bookkeeping as Donovan's original (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time).
 4. End-of-day liquidation applies. Positions are not held overnight.
 
 ## 5. State: the dashboard database (persists between days)
 Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with the artifact url.
 - At the start, `get` collection "bot", docs "state" (main), "state_early" (early) and "state_regime" (regime). Fields: symbol, phase ("paper"), balance, principal (5.00), realized_pnl, position (null or object below), check_count, consecutive_errors (main doc only), updated_at. Keep each doc's `version` and pass it as `if_version` on every write; use the new version each write returns. If a write fails on version, re-read and redo it. If "state_regime" does not exist yet, create it (no if_version) with symbol "CBRS", phase "paper", balance 5.00, principal 5.00, realized_pnl 0, position null, check_count 0, last_sell_time null, last_used_signal_bar null.
-- position object: {shares, cost_price, cost_basis, entry_time, peak_price, last_bid, stop_price, stop_reason ("initial"|"breakeven"|"breakeven_plus"|"trailing"|"principal"), stops: {initial, breakeven (null until active), breakeven_plus (null until active), trailing, principal_floor (null unless active)}, realized_pnl_before_trade, entry_bar_end (ISO time of the crossover bar's end)}
-- Regime position object: {shares, cost_price, cost_basis, entry_time, mode ("trend"|"bounce"), atr_at_entry, peak_price, last_bid, stop_price, stop_reason ("initial"|"trailing"), stops: {initial, trailing, take_profit (null in trend mode)}, entry_bar_end (ISO time of the signal bar's end)}
-- Definitions: cost_price = the per-share price paid (the ask at the paper fill). cost_basis = total dollars spent (shares × cost_price). All stop levels are per-share prices derived from cost_price; they are compared with the current bid.
+- position object: {shares, cost_price, cost_basis, entry_time, peak_price, last_bid, stop_price, stop_reason ("initial"|"breakeven"|"breakeven_plus"|"trailing"|"principal"), stops: {initial, breakeven (null until active), breakeven_plus (null until active), trailing, principal_floor (null unless active)}, realized_pnl_before_trade, entry_bar_end (ISO time of the crossover bar's end), stop_order: {type: "stop", trigger, placed_at, modified_at}}
+- Regime position object: {shares, cost_price, cost_basis, entry_time, mode ("trend"|"bounce"), atr_at_entry, peak_price, last_bid, stop_price, stop_reason ("initial"|"trailing"), stops: {initial, trailing, take_profit (null in trend mode)}, entry_bar_end (ISO time of the signal bar's end), stop_order: {type: "stop", trigger, placed_at, modified_at}}
+- Definitions: cost_price = the per-share price paid (the ask at the paper fill). cost_basis = total dollars spent (shares × cost_price). All stop levels are per-share prices derived from cost_price; the highest active level is the resting stop order's trigger.
 - Also keep per strategy: last_sell_time (ISO, null if none) and last_used_cross_bar (ISO end time of the crossover bar last used to buy), stored in its state doc. The regime doc keeps last_used_signal_bar (ISO end time of the signal bar last used to buy) instead of last_used_cross_bar.
 - Today's log: collection "days", doc id = today's date YYYY-MM-DD (Pacific), fields {date, lines: [..main lines..], lines_early: [..early lines..], lines_regime: [..regime lines..], summary: ""}. Create it on the first check (no if_version when creating); if it already exists without lines_regime, add that field.
 - Trades: collection "trades", doc id like "20261019-0712-main-buy" or "20261019-0712-early-sell" or "20261019-0712-regime-buy", fields {ts (ISO UTC), strategy ("main"|"early"|"regime"), side ("buy"|"sell"), price, shares, amount, pnl (sells only), reason, gap (bool)}.
@@ -91,12 +99,16 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 ## 6. Market hours and pacing
 - Regular hours: weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Check the time with `TZ=America/Los_Angeles date` in Bash.
 - Market holiday: if by 6:45am CBRS's quote has no trade timestamp from today, log one line "MARKET CLOSED (holiday) — no action" in all three line arrays, post it, and end the run.
-- Loop: run this task with the `/loop 3.9m` command so each check fires every 3.9 minutes. Do not use Bash `sleep` or any other wait to pace checks. Keep looping until 1:00pm Pacific, then run the end-of-day step.
+- Schedule: at the start of the run, create ONE fixed recurring schedule with CronCreate (load it with ToolSearch "select:CronCreate,CronList,CronDelete"): cron `*/4 * * * *` (every 4 minutes; cron works in whole minutes, so this is the closest fixed interval to 3.9 minutes). Its prompt runs one check per this README. Run the first check right away; the schedule fires the rest.
+- A check must never schedule the next check: no ScheduleWakeup, no self-paced /loop, no Bash `sleep` or other waits.
+- Each firing first checks the Pacific time. Before 6:30am it does nothing. From 6:30am to 1:00pm it runs a check; the last check before the close is the one less than 4 minutes before 1:00pm. The first firing at or after 1:00pm runs the end-of-day step, deletes the schedule with CronDelete, and ends the run.
+- If more than 6 minutes have passed since the previous check (the main state doc's updated_at), log a line "MISSED CHECKS from HH:MM to HH:MM PT" in all three line arrays. The resting stop orders still fill at the right prices for that gap.
 
 ## 7. Data for each check (fetched once, used by all strategies)
 - Required data for the target ticker, from any read-only market-data tool available in the session (for example Massive, or Robinhood if its tools are present; no single provider is required):
   - Current quote: bid, ask, last price, and timestamps.
   - 5-minute bars including open, high, low and close, regular-hours bars only (6:30am–1:00pm Pacific), enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed).
+  - While any strategy holds a position: 1-minute regular-hours bars (open, high, low, close) since the earliest stop_order.modified_at, for the resting stop fill test.
 - Load the schemas of whichever data tool(s) you use with ToolSearch first. Use only read tools (quotes, historicals, search) from that provider.
 - If no available tool can supply the required data, or the data it supplies is missing, stale or contradictory, treat it as missing data under guardrail 4 and section 10.
 - Compute MACD in Python (Bash) from closing prices of COMPLETED 5-minute bars only: MACD line = EMA12 − EMA26; signal = 9-period EMA of the MACD line; histogram = MACD − signal. Use standard EMAs (alpha = 2/(n+1)). A bullish crossover on the latest completed bar = previous bar MACD ≤ signal AND this bar MACD > signal.

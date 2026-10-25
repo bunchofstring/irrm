@@ -20,6 +20,7 @@ The following run side by side on the SAME data at every check, each with its ow
 1. CBRS (Cerebras Systems) using Donovan’s original strategy
 2. CBRS using early strategy
 3. CBRS using the regime switch strategy
+4. AMZN using buy and hold with daily stop loss strategy.
 
 ## 4. Curated Strategies.
 The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Run a check on the fixed schedule in section 6 until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.

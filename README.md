@@ -20,7 +20,7 @@ The following run side by side on the SAME data at every check, each with its ow
 1. CBRS (Cerebras Systems) using Donovan’s original strategy
 2. CBRS using early strategy
 3. CBRS using the regime switch strategy
-4. AMZN using buy and hold with daily stop loss strategy.
+4. AMZN using buy and hold strategy
 
 ## 4. Curated Strategies.
 The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Run a check on the fixed-interval loop in section 6 until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
@@ -88,15 +88,20 @@ SELL rule:
 3. SELL when the resting stop-loss order fills (reason = stop_reason, fill price and GAP rule as in "Resting stop-loss orders" above), or, in BOUNCE mode, when the current BID ≥ take_profit at a check (reason "take_profit", fill at the current bid). Use the same bookkeeping as Donovan's original (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time).
 4. End-of-day liquidation applies. Positions are not held overnight.
 
+### 4. Buy and hold
+State doc: bot/state_bnh.
+BUY rule: Buy at asking price.
+SELL rule: Hold until further notice. End-of-day liquidation does NOT apply. Positions may be held overnight.
+
 ## 5. State: the dashboard database (persists between days)
 Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with the artifact url.
-- At the start, `get` collection "bot", docs "state" (main), "state_early" (early) and "state_regime" (regime). Fields: symbol, phase ("paper"), balance, principal (5.00), realized_pnl, position (null or object below), check_count, consecutive_errors (main doc only), updated_at. Keep each doc's `version` and pass it as `if_version` on every write; use the new version each write returns. If a write fails on version, re-read and redo it. If "state_regime" does not exist yet, create it (no if_version) with symbol "CBRS", phase "paper", balance 5.00, principal 5.00, realized_pnl 0, position null, check_count 0, last_sell_time null, last_used_signal_bar null.
+- At the start, `get` collection "bot", docs "state" (main), "state_early" (early), "state_regime" (regime), and "state_bnh". Fields: symbol, phase ("paper"), balance, principal (5.00), realized_pnl, position (null or object below), check_count, consecutive_errors (main doc only), updated_at. Keep each doc's `version` and pass it as `if_version` on every write; use the new version each write returns. If a write fails on version, re-read and redo it. If "state_regime" does not exist yet, create it (no if_version) with symbol "CBRS", phase "paper", balance 5.00, principal 5.00, realized_pnl 0, position null, check_count 0, last_sell_time null, last_used_signal_bar null.
 - position object: {shares, cost_price, cost_basis, entry_time, peak_price, last_bid, stop_price, stop_reason ("initial"|"breakeven"|"breakeven_plus"|"trailing"|"principal"), stops: {initial, breakeven (null until active), breakeven_plus (null until active), trailing, principal_floor (null unless active)}, realized_pnl_before_trade, entry_bar_end (ISO time of the crossover bar's end), stop_order: {type: "stop", trigger, placed_at, modified_at}}
 - Regime position object: {shares, cost_price, cost_basis, entry_time, mode ("trend"|"bounce"), atr_at_entry, peak_price, last_bid, stop_price, stop_reason ("initial"|"trailing"), stops: {initial, trailing, take_profit (null in trend mode)}, entry_bar_end (ISO time of the signal bar's end), stop_order: {type: "stop", trigger, placed_at, modified_at}}
 - Definitions: cost_price = the per-share price paid (the ask at the paper fill). cost_basis = total dollars spent (shares × cost_price). All stop levels are per-share prices derived from cost_price; the highest active level is the resting stop order's trigger.
 - Also keep per strategy: last_sell_time (ISO, null if none) and last_used_cross_bar (ISO end time of the crossover bar last used to buy), stored in its state doc. The regime doc keeps last_used_signal_bar (ISO end time of the signal bar last used to buy) instead of last_used_cross_bar.
-- Today's log: collection "days", doc id = today's date YYYY-MM-DD (Pacific), fields {date, lines: [..main lines..], lines_early: [..early lines..], lines_regime: [..regime lines..], summary: ""}. Create it on the first check (no if_version when creating); if it already exists without lines_regime, add that field.
-- Trades: collection "trades", doc id like "20261019-0712-main-buy" or "20261019-0712-early-sell" or "20261019-0712-regime-buy", fields {ts (ISO UTC), strategy ("main"|"early"|"regime"), side ("buy"|"sell"), price, shares, amount, pnl (sells only), reason, gap (bool)}.
+- Today's log: collection "days", doc id = today's date YYYY-MM-DD (Pacific), fields {date, lines: [..main lines..], lines_early: [..early lines..], lines_regime: [..regime lines..], lines_bnh: [..bnh lines..], summary: ""}. Create it on the first check (no if_version when creating); if it already exists without lines_regime, add that field.
+- Trades: collection "trades", doc id like "20261019-0712-main-buy" or "20261019-0712-early-sell" or "20261019-0712-regime-buy", fields {ts (ISO UTC), strategy ("main"|"early"|"regime"|"bnh"), side ("buy"|"sell"), price, shares, amount, pnl (sells only), reason, gap (bool)}.
 - Write each check's changes in ONE `batch` call (all three state docs + the day doc's full updated line arrays + any trade docs), each existing doc pinned with its if_version.
 
 ## 6. Market hours and pacing

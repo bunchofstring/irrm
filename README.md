@@ -23,9 +23,7 @@ The following run side by side on the SAME data at every check, each with its ow
 4. AMZN using buy and hold strategy
 
 ## 4. Curated Strategies.
-The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Check active strategies and take action as prescribed.
-
-**Recurring checks:** At the start of the session, /loop 4m Run ONE IRRM check. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
+The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Run a check on the fixed-interval loop in section 6. Check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
 
 **End-of-day liquidation:** No strategy holds a position overnight unless every end-of-day check was missed. Every check from 12:50pm Pacific until the 1:00pm close is an end-of-day check: if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L. No strategy opens a new position from 12:50pm onward.
 
@@ -109,8 +107,10 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 ## 6. Market hours and pacing
 - Regular hours: weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Check the time with `TZ=America/Los_Angeles date` in Bash.
 - Market holiday: if by 6:45am CBRS's quote has no trade timestamp from today, log one line "MARKET CLOSED (holiday) — no action" in all three line arrays, post it, and end the run.
-- Schedule: /loop 4m run one IRRM check. Run the first check at the start of the session, then the schedule fires the rest. The loop must continue until closing, even if there is an error.
-- Each firing first checks the Pacific time. Before 6:30am it does nothing. From 6:30am to 1:00pm it runs a check; checks from 12:50pm onward are end-of-day. The first firing at or after 1:00pm runs the end-of-day step, deletes the schedule and ends the run.
+- Loop: at the start of the run, start ONE fixed-interval loop by invoking the `/loop` skill (Skill tool, skill "loop") with the interval given explicitly: `/loop 5m Run ONE IRRM check per /home/user/irrm/README.md.`. Run the first check right away; the loop fires the rest.
+- A check never invokes `/loop` again, never starts a self-paced `/loop` (one without an interval), and never uses ScheduleWakeup, CronCreate, Bash `sleep` or any other wait. If a firing finds more than one IRRM loop running, it keeps the oldest and stops the others (CronList / CronDelete; load them with ToolSearch "select:CronList,CronDelete").
+- Stay idle between checks. This prevents the session from ending, which helps prevent loop interruptions.
+- Each firing first checks the Pacific time. Before 6:30am it does nothing. From 6:30am to 1:00pm it runs a check; checks from 12:50pm onward are end-of-day checks (section 4). The first firing at or after 1:00pm runs the end-of-day step, stops the loop (find its job with CronList, remove it with CronDelete), and ends the run.
 - If more than 6 minutes have passed since the previous check (the main state doc's updated_at), log a line "MISSED CHECKS from HH:MM to HH:MM PT" in all three line arrays. The resting stop orders still fill at the right prices for that gap.
 
 ## 7. Data for each check (fetched once, used by all strategies)

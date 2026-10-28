@@ -23,7 +23,7 @@ The following run side by side on the SAME data at every check, each with its ow
 4. AMZN using buy and hold strategy
 
 ## 4. Curated Strategies.
-The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Run a check on the fixed-interval loop in section 6 until 1:00pm Pacific, check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
+The strategies never share money, positions or stops. Apply buy and sell rules to each strategy independently. Run a check on the fixed-interval loop in section 6. Check active strategies and take action as prescribed. At closing time, post the end-of-day summary and end. Work unattended. When in doubt, take NO ACTION and log why.
 
 **End-of-day liquidation:** No strategy holds a position overnight unless every end-of-day check was missed. Every check from 12:50pm Pacific until the 1:00pm close is an end-of-day check: if a strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation". Use the same bookkeeping as a stop exit (proceeds, pnl, balance, realized_pnl, position = null, last_sell_time = now). The GAP rule does not apply to liquidations. Log each liquidation in that strategy's lines array with a second line giving the trade P&L. No strategy opens a new position from 12:50pm onward.
 

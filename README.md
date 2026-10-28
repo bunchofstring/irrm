@@ -102,8 +102,9 @@ Use the ArtifactData tool (load it with ToolSearch "select:ArtifactData") with t
 ## 6. Market hours and pacing
 - Regular hours: weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Check the time with `TZ=America/Los_Angeles date` in Bash.
 - Market holiday: if by 6:45am CBRS's quote has no trade timestamp from today, log one line "MARKET CLOSED (holiday) — no action" in all three line arrays, post it, and end the run.
-- Loop: at the start of the run, start ONE fixed-interval loop by invoking the `/loop` skill (Skill tool, skill "loop") with the interval given explicitly: `/loop 4m Run ONE IRRM check per /home/user/irrm/README.md.` (loop intervals are whole minutes, so 4m is the closest fixed interval to 3.9 minutes). Run the first check right away; the loop fires the rest.
+- Loop: at the start of the run, start ONE fixed-interval loop by invoking the `/loop` skill (Skill tool, skill "loop") with the interval given explicitly: `/loop 5m Run ONE IRRM check per /home/user/irrm/README.md.`. Run the first check right away; the loop fires the rest.
 - A check must never schedule the next check. Only the loop started at the start of the run does that. A check never invokes `/loop` again, never starts a self-paced `/loop` (one without an interval), and never uses ScheduleWakeup, CronCreate, Bash `sleep` or any other wait. If a firing finds more than one IRRM loop running, it keeps the oldest and stops the others (CronList / CronDelete; load them with ToolSearch "select:CronList,CronDelete").
+- Stay idle between checks.
 - Each firing first checks the Pacific time. Before 6:30am it does nothing. From 6:30am to 1:00pm it runs a check; checks from 12:50pm onward are end-of-day checks (section 4). The first firing at or after 1:00pm runs the end-of-day step, stops the loop (find its job with CronList, remove it with CronDelete), and ends the run.
 - If more than 6 minutes have passed since the previous check (the main state doc's updated_at), log a line "MISSED CHECKS from HH:MM to HH:MM PT" in all three line arrays. The resting stop orders still fill at the right prices for that gap.
 

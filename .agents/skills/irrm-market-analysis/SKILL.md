@@ -5,7 +5,7 @@ description: Read-only market analysis for IRRM, such as where a symbol stands a
 
 # IRRM market analysis
 
-Analyze the active symbols (listed in `STRATEGIES.md`) or any symbol the human names.
+Analyze the active symbols (listed in `strategy/ACTIVE.md`) or any symbol the human names.
 
 ## Rules
 
@@ -16,6 +16,6 @@ Analyze the active symbols (listed in `STRATEGIES.md`) or any symbol the human n
 ## Useful analysis
 
 - Compute IRRM's indicators (`irrm-indicators`) on the latest completed bars.
-- For each active strategy, say how close it is to its rule set's buy or sell condition (`irrm-strategy`).
+- For each active strategy, say how close it is to its rule set's buy or sell condition.
 - Give market context: recent price action, volume, news and upcoming events such as earnings.
 - Say where data is missing or stale, and how that limits the analysis.

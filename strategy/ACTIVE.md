@@ -13,6 +13,6 @@ This is the only place that names the live strategies and their symbols. Every o
 
 - **id:** names the strategy in trade doc ids and in each trade's `strategy` field.
 - **symbol:** the only symbol this strategy may trade. The active symbols are the distinct symbols in this table.
-- **rule set:** the file `.agents/skills/irrm-strategy/references/<rule set>.md`.
+- **rule set:** the file `strategy/references/<rule set>.md`.
 - **state doc:** the dashboard doc that holds this strategy's balance and position.
 - **log field:** the field in each day's dashboard doc that holds this strategy's per-check lines.

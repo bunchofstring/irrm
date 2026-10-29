@@ -5,7 +5,7 @@ description: Backtest IRRM rule sets by replaying them over historical bars with
 
 # IRRM backtest
 
-Replay one or more rule sets from `irrm-strategy` over historical data. Use:
+Replay one or more rule sets from `strategy/references/` over historical data. Use:
 - `irrm-indicators` for the indicators
 - `irrm-paper-trading` for sizing, stop orders and end-of-day liquidation
 
@@ -31,4 +31,4 @@ Replay one or more rule sets from `irrm-strategy` over historical data. Use:
 
 ## Changing strategies
 
-A backtest never changes the live strategies. If the results support a change, draft it (see `irrm-strategy`) for a human maintainer to approve.
+A backtest never changes the live strategies. If the results support a change, propose it for a human maintainer to approve.

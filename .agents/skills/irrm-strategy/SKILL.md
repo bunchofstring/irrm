@@ -1,13 +1,16 @@
 ---
 name: irrm-strategy
-description: IRRM trading rule sets (buy and sell rules, stop levels, extra state fields). Use when running an active strategy in the IRRM check, replaying one in a backtest, or drafting, comparing or changing a trading strategy.
+description: Help a human create, compare or change IRRM trading strategies, from idea to a tested rule set ready for review. Use when a human wants to design a new strategy, tune an existing rule set, or understand how a rule set behaves.
 ---
 
 # IRRM strategy
 
-A **rule set** is a reusable set of trading rules. Each one lives in `references/<rule set>.md`.
+Helps a human turn a trading idea into a rule set that is precise, tested and ready for a human maintainer to review.
 
-A **strategy** is a rule set applied to one symbol, with its own $5.00 account. The live strategies are listed only in `STRATEGIES.md`. A rule set may back several strategies, or none.
+## Terms
+
+- A **rule set** is a reusable set of trading rules, one file per rule set in `strategy/references/`.
+- A **strategy** is a rule set applied to one symbol, with its own $5.00 account. Writing a rule set does not make it live.
 
 ## What a rule set file defines
 
@@ -19,15 +22,13 @@ A **strategy** is a rule set applied to one symbol, with its own $5.00 account. 
 - **End-of-day liquidation:** whether it applies.
 - **Log line additions**, if any.
 
-Rule sets describe only their own trading rules. The indicator math and the paper-trading mechanics they rely on (sizing, fills, stop orders, liquidation) are the same for every rule set, so they are not defined here.
+Rule sets describe only their own trading rules. The indicator math and the paper-trading mechanics (sizing, fills, stop orders, liquidation) are the same for every rule set, so a rule set file does not repeat them.
 
-## Using a rule set
+## Workflow
 
-- **In a check:** read the rule set named in each active strategy's row, and apply it to that strategy alone.
-- **In a backtest or analysis:** list `references/` and read the rule sets you need.
-
-## Drafting or changing rule sets
-
-- Write a new rule set as a new `references/<name>.md` file with the sections above. Keep its rules precise enough to apply with no judgment calls.
-- Changing a rule set changes every strategy that uses it.
-- A rule set goes live only when a human maintainer approves adding a row for it to `STRATEGIES.md`. Suggest backtesting the rule set before proposing that.
+1. **Understand the idea.** Ask what market behavior the human wants to trade, on which symbols, and what risk they will accept. Read existing rule sets in `strategy/references/` for comparison or as a starting point.
+2. **Look at the market.** Use `irrm-market-analysis` to check how the idea fits recent price action on the symbols in question.
+3. **Define the signals.** Express every condition with the indicators in `irrm-indicators`. If the idea needs an indicator that skill does not define, say so and propose adding it there first.
+4. **Write the rule set.** Draft `strategy/references/<name>.md` with the sections above. Keep every rule precise enough to apply with no judgment calls. Changing an existing rule set changes every strategy that uses it, so prefer a new file for a new idea.
+5. **Test it.** Use `irrm-backtest` to replay the rule set, and compare it with the rule sets it would replace or run beside.
+6. **Hand it over.** Summarize the rule set and the backtest results. A rule set goes live only when a human maintainer approves adding it to the active strategies list.

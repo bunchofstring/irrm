@@ -24,7 +24,7 @@ Use only read tools (quotes, historicals, search). All trades are hypothetical. 
 
 ## Active strategies
 
-`STRATEGIES.md` lists the live strategies and their symbols. It is the only place that names them.
+`strategy/ACTIVE.md` lists the live strategies and their symbols. It is the only place that names them.
 
 ## Skills
 

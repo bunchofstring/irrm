@@ -11,21 +11,9 @@ IRRM is an AI-run paper-trading system for Donovan. On every trading day, a sche
 | `README.md` | Humans | This page |
 | `AGENTS.md` | Every AI agent in this repo | Persona, paper-only rules, denied actions, where skills live |
 | `tasks/irrm-check.md` | The scheduled task | The check: guardrails, **the active strategies list**, dependencies, schedule and steps |
-| `.agents/skills/` | Agents, as needed | Skills, each with details that load only when needed (see below) |
+| `.agents/skills/` | Agents, as needed | Skills, one folder each. Each skill keeps its details in files that load only when needed |
 
-Skills:
-
-| Skill | Used by | Covers |
-|---|---|---|
-| `irrm-indicators` | Check, backtest, analysis | MACD, crossover, EMA200, RSI14, ATR14 |
-| `irrm-paper-trading` | Check, backtest | Paper fills, resting stop-loss orders, end-of-day liquidation |
-| `irrm-strategy` | Check, backtest, interactive | Rule sets, one file each in `references/` |
-| `irrm-dashboard` | Check, interactive | Database schema; creating the dashboard |
-| `irrm-summary` | Check | The end-of-day summary |
-| `irrm-backtest` | Interactive | Replaying rule sets over history |
-| `irrm-market-analysis` | Interactive | Read-only analysis of symbols and signals |
-
-The skills follow the open Agent Skills format in `.agents/skills/`, so they aren't tied to one AI provider. `AGENTS.md` tells agents to look there.
+To see what each skill covers, browse `.agents/skills/`: every `SKILL.md` starts with a one-line description. The skills follow the open Agent Skills format, so they aren't tied to one AI provider. `AGENTS.md` tells agents to look there.
 
 ## Set up IRRM
 
@@ -35,7 +23,7 @@ In the AI app that will run the task, connect:
 - **Artifacts with a database:** these hold the dashboard.
 
 ### 2. Create the dashboard
-Open an interactive session in this repository and ask: *"Set up the IRRM dashboard."* The agent follows the `irrm-dashboard` skill and gives you the new artifact's URL.
+Open an interactive session in this repository and ask: *"Set up the IRRM dashboard."* The agent creates it and gives you the new artifact's URL.
 
 ### 3. Create the scheduled task
 Create a scheduled task with:
@@ -53,6 +41,6 @@ If you leave `<TBD>` in place, the task trades nothing. It shows these setup ste
 ## Change strategies or symbols
 
 - **Add, remove or change a live strategy:** edit the active strategies table in `tasks/irrm-check.md`. It is the only place that names strategies and symbols. Nothing else needs updating: the dashboard creates any new state docs and log fields on the next check.
-- **Add a new kind of strategy:** add a rule-set file to `.agents/skills/irrm-strategy/references/`. Then reference it from the table. Backtest it first (`irrm-backtest`).
+- **Add a new kind of strategy:** add a rule-set file to `.agents/skills/irrm-strategy/references/`. Then reference it from the table. Backtest it first.
 
 An AI assistant may draft these changes, but a human maintainer must approve them.

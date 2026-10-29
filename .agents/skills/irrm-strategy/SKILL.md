@@ -19,7 +19,7 @@ A **strategy** is a rule set applied to one symbol, with its own $5.00 account. 
 - **End-of-day liquidation:** whether it applies.
 - **Log line additions**, if any.
 
-Sizing, fills, stop orders and liquidation mechanics are shared by all rule sets. They live in `irrm-paper-trading`. Indicators live in `irrm-indicators`.
+Rule sets describe only their own trading rules. The indicator math and the paper-trading mechanics they rely on (sizing, fills, stop orders, liquidation) are the same for every rule set, so they are not defined here.
 
 ## Using a rule set
 
@@ -30,4 +30,4 @@ Sizing, fills, stop orders and liquidation mechanics are shared by all rule sets
 
 - Write a new rule set as a new `references/<name>.md` file with the sections above. Keep its rules precise enough to apply with no judgment calls.
 - Changing a rule set changes every strategy that uses it.
-- A rule set goes live only when a human maintainer approves adding a row for it to the active strategies table in `tasks/irrm-check.md`. Suggest a backtest (`irrm-backtest`) before proposing that.
+- A rule set goes live only when a human maintainer approves adding a row for it to the active strategies table in `tasks/irrm-check.md`. Suggest backtesting the rule set before proposing that.

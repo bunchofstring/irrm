@@ -53,7 +53,7 @@ Before the first check, confirm that each dependency is available. If a required
 | Need | Required | Suggested connector or tool | Skill |
 |---|---|---|---|
 | Market data: quotes and 1- and 5-minute bars for each active symbol | yes | Any read-only market-data connector, for example Massive or Robinhood (read tools only) | — |
-| Dashboard database | yes | The ArtifactData tool, plus the dashboard URL from the prompt | `.agents/skills/irrm-dashboard/` (read `references/schema.md`) |
+| Dashboard database | yes | The ArtifactData tool, plus the dashboard URL from the prompt | `.agents/skills/irrm-dashboard/` |
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` | — |
 | Indicator math | yes | Python, run through Bash | `.agents/skills/irrm-indicators/` |
 | Recurring schedule | yes | `/loop` | — |
@@ -79,7 +79,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 6. One check
 
-1. **Read state.** Read `bot/check`, each active strategy's state doc, and today's day doc, as described in `irrm-dashboard` `references/schema.md`. Create any doc that is missing.
+1. **Read state.** Read `bot/check`, each active strategy's state doc, and today's day doc, as `irrm-dashboard` describes. Create any doc that is missing.
 2. **Fetch data once.** Do this per active symbol, from any read-only market-data tool:
    - the current quote: bid, ask, last price and timestamps
    - 5-minute regular-hours bars (open, high, low, close), with enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed)
@@ -97,7 +97,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
    `irrm-paper-trading` has the fill, stop and liquidation mechanics.
 5. **Log.** Append one line per active strategy to its log field, and print each line in your output. The format is in the next section.
-6. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields and any trade docs in ONE batch, as `references/schema.md` describes.
+6. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields and any trade docs in ONE batch, as `irrm-dashboard` describes.
 
 ## 7. Per-check lines
 

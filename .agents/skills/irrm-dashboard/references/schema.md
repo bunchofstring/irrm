@@ -1,6 +1,6 @@
 # Dashboard database schema
 
-This schema does not name any particular strategy or symbol. "Each active strategy" means each row of the active strategies table in `tasks/irrm-check.md`. That row gives the strategy's id, symbol, rule set, state doc and log field.
+This schema does not name any particular strategy or symbol. "Each active strategy" means each row of `STRATEGIES.md`. That row gives the strategy's id, symbol, rule set, state doc and log field.
 
 ## Versioning
 

@@ -5,7 +5,7 @@ description: Read-only market analysis for IRRM, such as where a symbol stands a
 
 # IRRM market analysis
 
-Analyze the active symbols (from the active strategies table in `tasks/irrm-check.md`) or any symbol the human names.
+Analyze the active symbols (listed in `STRATEGIES.md`) or any symbol the human names.
 
 ## Rules
 

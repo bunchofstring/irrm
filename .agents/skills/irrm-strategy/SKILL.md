@@ -7,7 +7,7 @@ description: IRRM trading rule sets (buy and sell rules, stop levels, extra stat
 
 A **rule set** is a reusable set of trading rules. Each one lives in `references/<rule set>.md`.
 
-A **strategy** is a rule set applied to one symbol, with its own $5.00 account. The live strategies are listed only in the active strategies table in `tasks/irrm-check.md`. A rule set may back several strategies, or none.
+A **strategy** is a rule set applied to one symbol, with its own $5.00 account. The live strategies are listed only in `STRATEGIES.md`. A rule set may back several strategies, or none.
 
 ## What a rule set file defines
 
@@ -30,4 +30,4 @@ Rule sets describe only their own trading rules. The indicator math and the pape
 
 - Write a new rule set as a new `references/<name>.md` file with the sections above. Keep its rules precise enough to apply with no judgment calls.
 - Changing a rule set changes every strategy that uses it.
-- A rule set goes live only when a human maintainer approves adding a row for it to the active strategies table in `tasks/irrm-check.md`. Suggest backtesting the rule set before proposing that.
+- A rule set goes live only when a human maintainer approves adding a row for it to `STRATEGIES.md`. Suggest backtesting the rule set before proposing that.

@@ -10,7 +10,7 @@ IRRM is an AI-run paper-trading system for Donovan. On every trading day, a sche
 |---|---|---|
 | `README.md` | Humans | This page |
 | `AGENTS.md` | Every AI agent in this repo | Persona, paper-only rules, denied actions, where skills live |
-| `strategy/` | Humans and agents | **`ACTIVE.md`**, the active strategies list (which strategies run, on which symbols), and **`references/`**, the rule sets they use |
+| `strategy/` | Humans and agents | **`ACTIVE.md`**, the active strategies list: which strategies run, on which symbols |
 | `tasks/irrm-check.md` | The scheduled task | The check: guardrails, dependencies, schedule and steps |
 | `.agents/skills/` | Agents, as needed | Skills, one folder each. Each skill keeps its details in files that load only when needed |
 
@@ -42,6 +42,6 @@ If you leave `<TBD>` in place, the task trades nothing. It shows these setup ste
 ## Change strategies or symbols
 
 - **Add, remove or change a live strategy:** edit the table in `strategy/ACTIVE.md`. It is the only place that names strategies and symbols. Nothing else needs updating: the dashboard creates any new state docs and log fields on the next check.
-- **Add a new kind of strategy:** add a rule-set file to `strategy/references/`. Then reference it from the table. Backtest it first.
+- **Add a new kind of strategy:** ask an agent in this repository to help you design one. It drafts a rule set and backtests it for you to review. Then reference it from the table.
 
 An AI assistant may draft these changes, but a human maintainer must approve them.

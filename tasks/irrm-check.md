@@ -57,10 +57,10 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 ## 5. Market hours and schedule
 
 - **Regular hours:** weekdays 6:30am–1:00pm Pacific (America/Los_Angeles).
-- **Schedule:** `/loop 4m Run ONE IRRM check`. Run the first check at the start of the session, then let the schedule fire the rest. The loop must continue until the close, even if there is an error.
+- **Schedule:** `/loop 4m Run ONE IRRM check`. Run the first check at the start of the session, then let the schedule fire the rest. The loop must continue until the close, even if there is an error. Stay idle between checks to help prevent timeouts that can interrupt the loop. Keep the container alive so it is not replaced.
 - **Each firing** first checks the Pacific time:
   - Before 6:30am, it does nothing.
-  - From 6:30am to 1:00pm, it runs one check. Checks from 12:50pm onward are end-of-day checks.
+  - From 6:30am to 1:00pm, it runs one check in each loop. Checks from 12:50pm onward are end-of-day checks.
   - The first firing at or after 1:00pm runs the end-of-day step (section 8), deletes the schedule and ends the run.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field

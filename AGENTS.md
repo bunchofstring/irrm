@@ -31,8 +31,6 @@ When a task may need a skill:
 2. Read the full SKILL.md of the skill you chose.
 3. Open its reference files only when the SKILL.md tells you to.
 
-## Repository layout
+## Tasks
 
-- `README.md`: for humans. Explains what IRRM is and how to set it up.
-- `tasks/`: definitions of scheduled tasks. Run one only when a scheduled task's prompt or a human tells you to.
-- `.agents/skills/`: skills, as above.
+Tasks live in `tasks/<name>.md`. Run a task only when a scheduled task's prompt or a human tells you to.

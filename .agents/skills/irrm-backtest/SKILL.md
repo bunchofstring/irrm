@@ -19,7 +19,7 @@ Replay one or more rule sets from `irrm-strategy` over historical data. Use:
 
 1. **Agree the scope with the human:** rule sets, symbols, date range, starting balance (default $5.00 principal) and cap (default $100.00).
 2. **Fetch the data.** Get 5-minute regular-hours bars for the range, plus enough earlier history to warm up the indicators (at least 400 completed bars). Get 1-minute bars for the stop fill test.
-3. **Step through the data.** Step through each 4-minute check time in regular hours, and apply each rule set as the live check would. Only use bars completed by that time.
+3. **Step through the data.** Step through each check during regular hours, and apply each rule set as the live check would. Only use bars completed by that time.
 4. **State your assumptions.** Historical bid and ask quotes are often unavailable. Say what you used instead (for example, the 1-minute close for both), and say how that may flatter or penalize the results.
 5. **Report per rule set:**
    - trades

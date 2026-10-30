@@ -5,7 +5,7 @@ description: Backtest IRRM rule sets by replaying them over historical bars with
 
 # IRRM backtest
 
-Replay one or more rule sets from `strategy/references/` over historical data. Use:
+Replay one or more rule sets over historical data. The "rule set" column of `strategy/ACTIVE.md` says where each rule set file lives. Use:
 - `irrm-indicators` for the indicators
 - `irrm-paper-trading` for sizing, stop orders and end-of-day liquidation
 

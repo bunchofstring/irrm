@@ -9,7 +9,7 @@ Helps a human turn a trading idea into a rule set that is precise, tested and re
 
 ## Terms
 
-- A **rule set** is a reusable set of trading rules, one file per rule set in `strategy/references/`.
+- A **rule set** is a reusable set of trading rules, one file per rule set. The "rule set" column of `strategy/ACTIVE.md` says where rule set files live.
 - A **strategy** is a rule set applied to one symbol, with its own $5.00 account. Writing a rule set does not make it live.
 
 ## What a rule set file defines
@@ -26,9 +26,9 @@ Rule sets describe only their own trading rules. The indicator math and the pape
 
 ## Workflow
 
-1. **Understand the idea.** Ask what market behavior the human wants to trade, on which symbols, and what risk they will accept. Read existing rule sets in `strategy/references/` for comparison or as a starting point.
+1. **Understand the idea.** Ask what market behavior the human wants to trade, on which symbols, and what risk they will accept. Read the existing rule sets named in `strategy/ACTIVE.md` for comparison or as a starting point.
 2. **Look at the market.** Use `irrm-market-analysis` to check how the idea fits recent price action on the symbols in question.
 3. **Define the signals.** Express every condition with the indicators in `irrm-indicators`. If the idea needs an indicator that skill does not define, say so and propose adding it there first.
-4. **Write the rule set.** Draft `strategy/references/<name>.md` with the sections above. Keep every rule precise enough to apply with no judgment calls. Changing an existing rule set changes every strategy that uses it, so prefer a new file for a new idea.
+4. **Write the rule set.** Draft a new rule set file, beside the existing ones, with the sections above. Keep every rule precise enough to apply with no judgment calls. Changing an existing rule set changes every strategy that uses it, so prefer a new file for a new idea.
 5. **Test it.** Use `irrm-backtest` to replay the rule set, and compare it with the rule sets it would replace or run beside.
-6. **Hand it over.** Summarize the rule set and the backtest results. A rule set goes live only when a human maintainer approves adding it to the active strategies list.
+6. **Hand it over.** Summarize the rule set and the backtest results. A rule set goes live only when a human maintainer approves adding it to `strategy/ACTIVE.md`.

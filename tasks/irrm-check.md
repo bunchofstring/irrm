@@ -48,6 +48,7 @@ Before the first check, confirm that each dependency is available. If a required
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` | — |
 | Indicator math | yes | Python, run through Bash | `.agents/skills/irrm-indicators/` |
 | Recurring schedule | yes | `/loop` | — |
+| Sub-agents | no | In Claude Code, the Agent tool. Without it, the session runs each check itself. | — |
 | Strategy rules | yes | The rule set file named in each row of `strategy/ACTIVE.md` | — |
 | Paper fills, stops and liquidation | yes | — | `.agents/skills/irrm-paper-trading/` |
 | End-of-day summary | yes | — | `.agents/skills/irrm-summary/` |
@@ -62,6 +63,11 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - Before 6:30am, it does nothing.
   - From 6:30am to 1:00pm, it runs one check in each loop. Checks from 12:50pm onward are end-of-day checks.
   - The first firing at or after 1:00pm runs the end-of-day step (section 8), deletes the schedule and ends the run.
+- **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
+  - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
+  - The sub-agent returns only a short summary: the per-check lines from section 7, any error, and either CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors).
+  - On END RUN, the session posts the reason, deletes the schedule and ends the run.
+  - The end-of-day step (section 8) also runs in a sub-agent.
 - **Between firings:** each firing ends by running one simple background sleep command that finishes 10 seconds before the next firing. This keeps the session, and with it the schedule, alive.
   - Label the command "Waiting for next iteration". For example, `sleep 230`.
   - When the sleep ends, show "The wait is over. Next iteration will start shortly." in the chat.
@@ -106,10 +112,10 @@ Log every check, one line per active strategy, including when it takes no action
 
 ## 8. End of day
 
-The end-of-day step is the first firing at or after the 1:00pm Pacific close. Write the summary described in `irrm-summary` into today's day doc `summary` field, and make it your final message.
+The end-of-day step is the first firing at or after the 1:00pm Pacific close. It runs in a sub-agent, which writes the summary described in `irrm-summary` into today's day doc `summary` field and returns it. The session makes that summary its final message.
 
 ## 9. Errors
 
 - **Failed MCP or API call:** retry once. If it still fails, log the error message and increment `consecutive_errors` in `bot/check`. Reset it to 0 after a good check.
-- **3 consecutive data errors:** log it, write the state, post a short message saying the bot stopped and why, and end the run.
-- **Failed ArtifactData write:** re-read and retry once. If it still fails, keep state in memory, log the issue in your output, and try again at the next check.
+- **3 consecutive data errors:** log it, write the state, and return END RUN with a short message saying the bot stopped and why.
+- **Failed ArtifactData write:** re-read and retry once. If it still fails, log the issue and return the unwritten batch in the summary. The session passes that batch to the next check's sub-agent, which writes it before anything else.

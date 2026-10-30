@@ -62,11 +62,10 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - Before 6:30am, it does nothing.
   - From 6:30am to 1:00pm, it runs one check in each loop. Checks from 12:50pm onward are end-of-day checks.
   - The first firing at or after 1:00pm runs the end-of-day step (section 8), deletes the schedule and ends the run.
-- **Between firings:** end every firing that does not end the run, including those before 6:30am, by waiting until the next firing is due. This keeps the session, and with it the schedule, alive.
-  - Run a sleep command for the seconds left until the next firing, less about 10 seconds, so the wait ends just before the schedule fires again. For example, `sleep 225`.
-  - Give the command a timeout longer than the sleep.
-  - If the environment refuses a foreground sleep, run the same wait as a background command.
-  - Do not wait after a firing that ends the run: the end-of-day step, a market holiday, or a stop after 3 consecutive data errors.
+- **Between firings:** each firing ends by running one simple background sleep command that finishes 10 seconds before the next firing. This keeps the session, and with it the schedule, alive.
+  - Label the command "Waiting for next iteration". For example, `sleep 230`.
+  - When the sleep ends, show "The wait is over. Next iteration will start shortly." in the chat.
+  - Skip the sleep only after a firing that ends the run: the end-of-day step, a market holiday, or a stop after 3 consecutive data errors.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field
   - post that line
@@ -94,7 +93,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
    `irrm-paper-trading` has the fill, stop and liquidation mechanics.
 5. **Log.** Append one line per active strategy to its log field, and print each line in your output. The format is in the next section.
 6. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields and any trade docs in ONE batch, as `irrm-dashboard` describes.
-7. **Wait.** Sleep until the next firing, as section 5 describes under "Between firings".
+7. **Wait.** Run the background sleep labeled "Waiting for next iteration", as section 5 describes under "Between firings".
 
 ## 7. Per-check lines
 

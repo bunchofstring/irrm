@@ -12,4 +12,5 @@ Read and write the database with the ArtifactData tool, using the dashboard arti
 ## Read only when needed
 
 - **`references/schema.md`:** collections, doc shapes, versioning and the one-batch write. Read it whenever you read or write IRRM state, including at every IRRM check.
+- **`references/csv.md`:** the two CSV files that feed the dashboard's charts, and how to update them. Read it at every IRRM check.
 - **`references/setup.md`:** how to create or rebuild the dashboard artifact. Read it only when a human asks to set up or change the dashboard, or when a check reports that no dashboard URL was given.

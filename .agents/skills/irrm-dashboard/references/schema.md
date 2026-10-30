@@ -104,5 +104,6 @@ Write each check's changes in ONE `batch` call:
 - every active strategy's state doc
 - the day doc's full updated log fields
 - any trade docs
+- the `datasets/daily_pnl` and `datasets/hourly_pnl` docs, pointing to the new CSV files (see `csv.md`)
 
 Pin each existing doc with its `if_version`.

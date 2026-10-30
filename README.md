@@ -41,7 +41,7 @@ If you leave `<TBD>` in place, the task trades nothing. It shows these setup ste
 
 ## Change strategies or symbols
 
-- **Add, remove or change a live strategy:** edit the table in `strategy/ACTIVE.md`. It is the only place that names strategies and symbols. Nothing else needs updating: the dashboard creates any new state docs and log fields on the next check.
+- **Add, remove or change a live strategy:** edit the table in `strategy/ACTIVE.md`. It is the only place that names strategies and symbols. Give each row a display name for the dashboard's charts. Nothing else needs updating: the next check creates any new state docs and log fields, and adds the strategy to the chart data.
 - **Add a new kind of strategy:** ask an agent in this repository to help you design one. It drafts a rule set and backtests it for you to review. Then reference it from the table.
 
 An AI assistant may draft these changes, but a human maintainer must approve them.

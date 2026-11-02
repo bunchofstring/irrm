@@ -72,7 +72,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 - **Between firings:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
   - **After every check, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
   - **Time it from the schedule's real next run**, as the schedule itself reports it (in Claude Code, `CronList`), not from 4-minute clock boundaries. The sleep ends 10 seconds before that run. For example, `sleep 230`.
-  - **When a sleep ends,** show "The wait is over. Next iteration will start shortly." in the chat. If no check is running, start a 60-second background sleep with the same label, so something is still running when the next firing arrives.
+  - **When a sleep ends,** show "The wait is over. Next iteration will start shortly." in the chat.
   - Skip the sleep only after a firing that ends the run: the end-of-day step, a market holiday, or a stop after 3 consecutive data errors.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field

@@ -69,9 +69,10 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - The sub-agent returns only a short summary: the per-check lines from section 7, any error, and either CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors).
   - On END RUN, the session posts the reason, deletes the schedule and ends the run.
   - The end-of-day step (section 8) also runs in a sub-agent.
-- **Between firings:** each firing ends by running one simple background sleep command that finishes 10 seconds before the next firing. This keeps the session, and with it the schedule, alive.
-  - Label the command "Waiting for next iteration". For example, `sleep 230`.
-  - When the sleep ends, show "The wait is over. Next iteration will start shortly." in the chat.
+- **Between firings:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
+  - **After every check, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
+  - **Time it from the schedule's real next run**, as the schedule itself reports it (in Claude Code, `CronList`), not from 4-minute clock boundaries. The sleep ends 10 seconds before that run. For example, `sleep 230`.
+  - **When a sleep ends,** show "The wait is over. Next iteration will start shortly." in the chat. If no check is running, start a 60-second background sleep with the same label, so something is still running when the next firing arrives.
   - Skip the sleep only after a firing that ends the run: the end-of-day step, a market holiday, or a stop after 3 consecutive data errors.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field
@@ -101,7 +102,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 5. **Log.** Append one line per active strategy to its log field, and print each line in your output. The format is in the next section.
 6. **Update the dashboard CSV files.** Rebuild today's rows of both CSV files that feed the dashboard's charts and upload them, as `irrm-dashboard` describes.
 7. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields, any trade docs and the two CSV dataset docs in ONE batch, as `irrm-dashboard` describes. Then delete the old CSV assets.
-8. **Wait.** Run the background sleep labeled "Waiting for next iteration", as section 5 describes under "Between firings".
+8. **Wait.** Start a new background sleep labeled "Waiting for next iteration", even if one is still running, as section 5 describes under "Between firings".
 
 ## 7. Per-check lines
 

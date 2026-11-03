@@ -66,7 +66,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - The first firing at or after 1:00pm runs the end-of-day step (section 8), deletes the schedule and ends the run.
 - **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
   - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
-  - The sub-agent returns only a short summary: the per-check lines from section 7, any error, and either CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors).
+  - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the session does not need them, and every line it keeps is re-read at each later firing.
   - On END RUN, the session posts the reason, deletes the schedule and ends the run.
   - The end-of-day step (section 8) also runs in a sub-agent.
 - **Between firings:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
@@ -82,7 +82,13 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 6. One check
 
-1. **Read state.** Read `bot/check`, each active strategy's state doc, and today's day doc, as `irrm-dashboard` describes. Create any doc that is missing.
+**Keep data out of your context.** Each model call re-reads everything in the conversation, so work on files, not on text in the conversation:
+- Read dashboard docs to JSON files (in Claude Code, ArtifactData's `out_dir`).
+- Ask market-data tools for only what the check uses: completed regular-hours bars and the fields the indicators need. When a tool can keep its result out of the conversation, for example by saving it to a file, use that.
+- Do the indicators, fills, log lines, CSV rows and the write batch in Python, on those files. Look at only the values a decision needs.
+- Send each doc of the write batch from a JSON file (ArtifactData's `file_path`), so you never retype the day doc's log.
+
+1. **Read state.** Read `bot/check`, each active strategy's state doc, and today's day doc to JSON files, as `irrm-dashboard` describes. Create any doc that is missing.
 2. **Fetch data once.** Do this per active symbol, from any read-only market-data tool:
    - the current quote: bid, ask, last price and timestamps
    - 5-minute regular-hours bars (open, high, low, close), with enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed)
@@ -99,9 +105,9 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
    6. Apply the BUY rule. No new positions from 12:50pm onward.
 
    `irrm-paper-trading` has the fill, stop and liquidation mechanics.
-5. **Log.** Append one line per active strategy to its log field, and print each line in your output. The format is in the next section.
+5. **Log.** Append one line per active strategy to its log field. The format is in the next section.
 6. **Update the dashboard CSV files.** Rebuild today's rows of both CSV files that feed the dashboard's charts and upload them, as `irrm-dashboard` describes.
-7. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields, any trade docs and the two CSV dataset docs in ONE batch, as `irrm-dashboard` describes. Then delete the old CSV assets.
+7. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields, any trade docs and the two CSV dataset docs in ONE batch, built as JSON files and sent with `file_path`, as `irrm-dashboard` describes. Then delete the old CSV assets.
 8. **Wait.** Start a new background sleep labeled "Waiting for next iteration", even if one is still running, as section 5 describes under "Between firings".
 
 ## 7. Per-check lines
@@ -122,4 +128,4 @@ The end-of-day step is the first firing at or after the 1:00pm Pacific close. It
 - **Failed MCP or API call:** retry once. If it still fails, log the error message and increment `consecutive_errors` in `bot/check`. Reset it to 0 after a good check.
 - **3 consecutive data errors:** log it, write the state, and return END RUN with a short message saying the bot stopped and why.
 - **Failed CSV upload:** retry once. If it still fails, log it and leave the dataset docs out of the batch, so the charts keep the previous files. Trading is not affected, and the next check tries again.
-- **Failed ArtifactData write:** re-read and retry once. If it still fails, log the issue and return the unwritten batch in the summary. The session passes that batch to the next check's sub-agent, which writes it before anything else.
+- **Failed ArtifactData write:** re-read and retry once. If it still fails, log the issue, keep the batch's JSON files on disk, and put their folder in the one-line summary. The session passes that folder to the next check's sub-agent, which writes them before anything else.

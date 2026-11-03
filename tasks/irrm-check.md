@@ -1,6 +1,6 @@
 # IRRM check
 
-This is the scheduled task. Throughout one trading day it runs a check every 4 minutes. Each check paper-trades every active strategy below and records the result in the dashboard database. It knows only what a check needs. For backtesting, analysis and strategy work, see the skills in `.agents/skills/`.
+This is the scheduled task. It runs a loop every 4 minutes until the close, and each loop during regular hours performs a check. Each check paper-trades every active strategy below and records the result in the dashboard database. It knows only what a check needs. For backtesting, analysis and strategy work, see the skills in `.agents/skills/`.
 
 Work unattended. When in doubt, take NO ACTION and log why.
 
@@ -59,25 +59,31 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 ## 5. Market hours and schedule
 
 - **Regular hours:** weekdays 6:30am–1:00pm Pacific (America/Los_Angeles).
-- **Schedule:** `/loop 4m Run ONE IRRM check`. Run the first check at the start of the session, then let the schedule fire the rest. The loop must continue until the close, even if there is an error. Keep the session and its container alive until then, so the schedule is not lost.
-- **Each firing** first checks the Pacific time:
-  - Before 6:30am, it does nothing.
-  - From 6:30am to 1:00pm, it runs one check in each loop. Checks from 12:50pm onward are end-of-day checks.
-  - The first firing at or after 1:00pm runs the end-of-day step (section 8), deletes the schedule and ends the run.
+- **Loops and checks are different things.**
+  - A **loop** fires every 4 minutes. It does its work, if any, in a sub-agent. When that work is done, the session sleeps until the next loop. A loop and its sleep work as a pair: the sleep keeps the session alive, so the next loop fires as planned.
+  - A **check** is the trading work: one pass over every active strategy (section 6). A loop performs a check only when it fires during regular hours.
+  - Loops and sleeps run whenever the routine runs, including outside regular hours. They continue until regular hours end, then the run ends itself gracefully.
+- **Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
+- **Each loop** reads the Pacific time, then:
+  - **Before 6:30am:** performs no check.
+  - **From 6:30am to 1:00pm:** performs one check in a sub-agent (below). Checks from 12:50pm onward are end-of-day checks.
+  - **At or after 1:00pm,** or on a day with no regular hours: runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet, then ends the run.
+  - Then sleeps until the next loop (below), unless it ended the run.
+- **Ending the run** is always graceful: delete the schedule, start no sleep, and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
 - **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Opus model (in Claude Code, the Agent tool's `model: "opus"`), whatever model the session itself runs, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
   - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
-  - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the session does not need them, and every line it keeps is re-read at each later firing.
-  - On END RUN, the session posts the reason, deletes the schedule and ends the run.
+  - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the session does not need them, and every line it keeps is re-read at each later loop.
+  - On END RUN, the session posts the reason and ends the run.
   - The end-of-day step (section 8) also runs in an Opus sub-agent.
-- **Between firings:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
-  - **After every check, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
+- **The sleep after each loop:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
+  - **After every loop, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
   - **Time it from the schedule's real next run**, as the schedule itself reports it (in Claude Code, `CronList`), not from 4-minute clock boundaries. The sleep ends 10 seconds before that run. For example, `sleep 230`.
   - **When a sleep ends,** show "The wait is over. Next iteration will start shortly." in the chat.
-  - Skip the sleep only after a firing that ends the run: the end-of-day step, a market holiday, or a stop after 3 consecutive data errors.
+  - Skip the sleep only after the loop that ends the run.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field
   - post that line
-  - end the run
+  - end the run (the session does this when the sub-agent returns END RUN)
 - **Missed checks:** if more than 6 minutes have passed since the previous check (`bot/check` `updated_at`), log "MISSED CHECKS from HH:MM to HH:MM PT" in every active strategy's log field. Resting stop orders still fill at the right prices for that gap.
 
 ## 6. One check
@@ -107,7 +113,6 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
    `irrm-paper-trading` has the fill, stop and liquidation mechanics.
 5. **Log.** Append one line per active strategy to its log field. The format is in the next section.
 6. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields and any trade docs in ONE batch, built as JSON files and sent with `file_path`, as `irrm-dashboard` describes. Do not update the dashboard's CSV files: that happens only at the end-of-day step.
-7. **Wait.** Start a new background sleep labeled "Waiting for next iteration", even if one is still running, as section 5 describes under "Between firings".
 
 ## 7. Per-check lines
 
@@ -120,7 +125,7 @@ Log every check, one line per active strategy, including when it takes no action
 
 ## 8. End of day
 
-The end-of-day step is the first firing at or after the 1:00pm Pacific close. It runs in a sub-agent, which updates the dashboard's CSV files, the only time in the day it does so, with open positions marked at the close (as `irrm-dashboard` describes). It then writes the summary described in `irrm-summary` into today's day doc `summary` field and returns it. The session makes that summary its final message.
+The end-of-day step runs in the first loop at or after the 1:00pm Pacific close. It runs in a sub-agent, which updates the dashboard's CSV files, the only time in the day it does so, with open positions marked at the close (as `irrm-dashboard` describes). It then writes the summary described in `irrm-summary` into today's day doc `summary` field and returns it. The session makes that summary its final message and ends the run (section 5).
 
 ## 9. Errors
 

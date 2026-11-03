@@ -64,11 +64,11 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - Before 6:30am, it does nothing.
   - From 6:30am to 1:00pm, it runs one check in each loop. Checks from 12:50pm onward are end-of-day checks.
   - The first firing at or after 1:00pm runs the end-of-day step (section 8), deletes the schedule and ends the run.
-- **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
+- **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Opus model (in Claude Code, the Agent tool's `model: "opus"`), whatever model the session itself runs, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
   - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
   - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the session does not need them, and every line it keeps is re-read at each later firing.
   - On END RUN, the session posts the reason, deletes the schedule and ends the run.
-  - The end-of-day step (section 8) also runs in a sub-agent.
+  - The end-of-day step (section 8) also runs in an Opus sub-agent.
 - **Between firings:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
   - **After every check, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
   - **Time it from the schedule's real next run**, as the schedule itself reports it (in Claude Code, `CronList`), not from 4-minute clock boundaries. The sleep ends 10 seconds before that run. For example, `sleep 230`.

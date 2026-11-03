@@ -104,6 +104,7 @@ Write each check's changes in ONE `batch` call:
 - every active strategy's state doc
 - the day doc's full updated log fields
 - any trade docs
-- the `datasets/daily_pnl` and `datasets/hourly_pnl` docs, pointing to the new CSV files (see `csv.md`)
+
+The dashboard's CSV files and their dataset docs are not part of a check's batch. They change only at the end-of-day step (see `csv.md`).
 
 Pin each existing doc with its `if_version`. Build each doc as a JSON file and send it with `file_path`, so large fields such as the day doc's log are never retyped.

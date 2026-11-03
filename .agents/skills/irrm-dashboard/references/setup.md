@@ -6,7 +6,7 @@ The dashboard is an artifact made from the Dashboard artifact type. Its shared d
 - the dashboard's own documents: `dash/meta`, `datasets/daily_pnl`, `datasets/hourly_pnl` and the page in `files/index.html`
 - IRRM's state: the `bot`, `days` and `trades` collections that `schema.md` describes
 
-The page draws its charts from the two CSV files in `csv.md`, never from IRRM's state directly. The check keeps those files current.
+The page draws its charts from the two CSV files in `csv.md`, never from IRRM's state directly. The end-of-day step updates those files once a day.
 
 ## Steps
 

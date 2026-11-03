@@ -77,7 +77,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - The end-of-day step (section 8) also runs in an Opus sub-agent.
 - **The sleep after each loop:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
   - **After every loop, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
-  - **Time it from the schedule's real next run**, as the schedule itself reports it (in Claude Code, `CronList`), not from 4-minute clock boundaries. The sleep ends 10 seconds before that run. For example, `sleep 230`.
+  - **Time it from the schedule's real next run.** The sleep ends 10 seconds before that run. For example, `sleep 230`.
   - **When a sleep ends,** show "The wait is over. Next iteration will start shortly." in the chat.
   - Skip the sleep only after the loop that ends the run.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:

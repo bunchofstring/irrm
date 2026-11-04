@@ -63,13 +63,16 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - A **loop** fires every 4 minutes. It does its work, if any, in a sub-agent. When that work is done, the session sleeps until the next loop. A loop and its sleep work as a pair: the sleep keeps the session alive, so the next loop fires as planned.
   - A **check** is the trading work: one pass over every active strategy (section 6). A loop performs a check only when it fires during regular hours.
   - Loops and sleeps run whenever the routine runs, including outside regular hours. They continue until regular hours end, then the run ends itself gracefully.
-- **Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
+- **Schedule:** `/loop 4m Run ONE IRRM loop. Follow section 5 of /home/user/irrm/tasks/irrm-check.md. Dashboard artifact: <url>`, with the dashboard URL from the prompt. The loop prompt names the file and the URL so loops still work after the session is compacted. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
+- **Compact once an hour.** No loop needs the session's history, but every model call re-reads it, so clear it after the last loop of each hour:
+  - At the start of the run, create a second recurring schedule whose prompt is `/compact` (in Claude Code, `CronCreate`). Set its minute from the loop schedule's real run times, so it falls after the last loop of each hour and before the first loop of the next. For example, minute 59 if loops run at :57 and :01.
+  - A compaction that starts during a sleep is fine: the sleep keeps running.
 - **Each loop** reads the Pacific time, then:
   - **Before 6:30am:** performs no check.
   - **From 6:30am to 1:00pm:** performs one check in a sub-agent (below). Checks from 12:50pm onward are end-of-day checks.
   - **At or after 1:00pm,** or on a day with no regular hours: runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet, then ends the run.
   - Then sleeps until the next loop (below), unless it ended the run.
-- **Ending the run** is always graceful: delete the schedule, start no sleep, and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
+- **Ending the run** is always graceful: delete both schedules (the loops and the hourly compaction), start no sleep, and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
 - **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Opus model (in Claude Code, the Agent tool's `model: "opus"`), whatever model the session itself runs, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
   - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
   - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the session does not need them, and every line it keeps is re-read at each later loop.

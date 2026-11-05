@@ -60,26 +60,28 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 - **Regular hours:** weekdays 6:30am–1:00pm Pacific (America/Los_Angeles).
 - **Loops and checks are different things.**
-  - A **loop** fires every 4 minutes. It does its work, if any, in a sub-agent. When that work is done, the session sleeps until the next loop. A loop and its sleep work as a pair: the sleep keeps the session alive, so the next loop fires as planned.
+  - A **loop** fires every 4 minutes. The main thread (the scheduled session) runs it.
   - A **check** is the trading work: one pass over every active strategy (section 6). A loop performs a check only when it fires during regular hours.
-  - Loops and sleeps run whenever the routine runs, including outside regular hours. They continue until regular hours end, then the run ends itself gracefully.
+  - Loops run whenever the routine runs, including outside regular hours. They continue until regular hours end, then the run ends itself gracefully.
 - **Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
-- **Each loop** reads the Pacific time, then:
-  - **Before 6:30am:** performs no check.
-  - **From 6:30am to 1:00pm:** performs one check in a sub-agent (below). Checks from 12:50pm onward are end-of-day checks.
-  - **At or after 1:00pm,** or on a day with no regular hours: runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet, then ends the run.
-  - Then sleeps until the next loop (below), unless it ended the run.
+- **Each loop has four steps, in this order.** Each step must finish before the next one begins.
+  1. The main thread gets the current Pacific time.
+  2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below) and waits for it to return. Otherwise, it continues to the next step. Checks from 12:50pm onward are end-of-day checks.
+  3. The main thread calculates how many seconds remain until the next check (the schedule's real next run).
+  4. If the next check is more than 10 seconds away, the main thread sleeps until 10 seconds before it (below). Otherwise, it does nothing.
+- **After the close:** if the time in step 1 is at or after 1:00pm, or today has no regular hours, step 2 instead runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet. The loop then ends the run and skips steps 3 and 4.
 - **Ending the run** is always graceful: delete the schedule, start no sleep, and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
-- **Each check runs in a sub-agent.** The scheduled session does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Opus model (in Claude Code, the Agent tool's `model: "opus"`), whatever model the session itself runs, waits for it to finish and shows the summary it returns. When there is no dashboard URL or a required dependency is missing, it starts none.
+- **The main thread is silent unless there is an error.** Every line it writes is re-read at each later loop, so it displays text only to report an error: a missing dashboard URL or dependency (section 4), a sub-agent that fails, or a sub-agent line that reports an error or END RUN. A loop that goes as planned displays nothing. The one other message is the final message when the run ends.
+- **Each check runs in a sub-agent.** The main thread does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Opus model (in Claude Code, the Agent tool's `model: "opus"`), whatever model the session itself runs, and waits for it to finish. When there is no dashboard URL or a required dependency is missing, it starts none.
   - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
-  - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the session does not need them, and every line it keeps is re-read at each later loop.
-  - On END RUN, the session posts the reason and ends the run.
+  - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the main thread does not display a line that reports no error.
+  - On END RUN, the main thread posts the reason and ends the run.
   - The end-of-day step (section 8) also runs in an Opus sub-agent.
-- **The sleep after each loop:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
-  - **After every loop, start a new background sleep**, even if an earlier one is still running. Overlapping sleeps are harmless. Label it "Waiting for next iteration".
+- **The sleep in step 4:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
+  - **Run the sleep as a background command.** Label it "Waiting for next iteration".
+  - **Never let sleeps overlap.** If an earlier sleep is still running, cancel it before starting the new one (in Claude Code, stop its background task with TaskStop).
   - **Time it from the schedule's real next run.** The sleep ends 10 seconds before that run. For example, `sleep 230`.
-  - **When a sleep ends,** show "The wait is over. Next iteration will start shortly." in the chat.
-  - Skip the sleep only after the loop that ends the run.
+  - **When a sleep ends,** display nothing.
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field
   - post that line

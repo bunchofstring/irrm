@@ -31,7 +31,7 @@ Create a scheduled task with:
 - **Repository:** this repo.
 - **Connectors:** the ones from step 1.
 - **Schedule:** weekdays, shortly before the 6:30am Pacific open. The task then runs a loop every 4 minutes until the 1:00pm close, performing a check in each loop during market hours, and then ends itself.
-- **Model:** a smaller, cheaper model is enough. The task only runs the loops; every check runs in a sub-agent on Opus.
+- **Model:** a smaller, cheaper model is enough. The task only runs the loops; every check runs in a sub-agent on Sonnet.
 - **Prompt:** this text, with `<TBD>` replaced by the dashboard URL from step 2:
 
 ```

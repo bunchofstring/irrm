@@ -67,7 +67,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 - **Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
 - **Each loop has two steps, in this order.** The second step starts only after the first one finishes.
   1. The main thread gets the current Pacific time.
-  2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below) and waits for it to return. Checks from 12:50pm onward are end-of-day checks.
+  2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below). Checks from 12:50pm onward are end-of-day checks.
 
   Then the loop ends. The schedule fires the next one, so a loop never sleeps or works out when the next loop runs.
 - **After the close:** if the time in step 1 is at or after 1:00pm, or today has no regular hours, step 2 instead runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet. The loop then ends the run.

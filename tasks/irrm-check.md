@@ -68,8 +68,6 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 - **Each loop has two steps, in this order.** The second step starts only after the first one finishes.
   1. The main thread gets the current Pacific time.
   2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below). Checks from 12:50pm onward are end-of-day checks.
-
-  Then the loop ends. The schedule fires the next one, so a loop never sleeps or works out when the next loop runs.
 - **After the close:** if the time in step 1 is at or after 1:00pm, or today has no regular hours, step 2 instead runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet. The loop then ends the run.
 - **Ending the run** is always graceful: delete the schedule, stop the keep-alive (below), and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
 - **The main thread is silent unless there is an error.** Every line it writes is re-read at each later loop, so it displays text only to report an error: a missing dashboard URL or dependency (section 4), a sub-agent that fails, or a sub-agent line that reports an error or END RUN. A loop that goes as planned ends its turn with no text at all: no status line, no summary of the check, no note about the keep-alive. The one other message is the final message when the run ends.

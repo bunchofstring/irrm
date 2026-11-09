@@ -48,6 +48,7 @@ Before the first check, confirm that each dependency is available. If a required
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` | — |
 | Indicator math | yes | Python, run through Bash | `.agents/skills/irrm-indicators/` |
 | Recurring schedule | yes | `/loop` | — |
+| Keep-alive between loops | yes | A background command, for example Bash `sleep` with `run_in_background` (section 5) | — |
 | Sub-agents | no | In Claude Code, the Agent tool. Without it, the session runs each check itself. | — |
 | Strategy rules | yes | The rule set file named in each row of `strategy/ACTIVE.md` | — |
 | Paper fills, stops and liquidation | yes | — | `.agents/skills/irrm-paper-trading/` |
@@ -64,24 +65,22 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - A **check** is the trading work: one pass over every active strategy (section 6). A loop performs a check only when it fires during regular hours.
   - Loops run whenever the routine runs, including outside regular hours. They continue until regular hours end, then the run ends itself gracefully.
 - **Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
-- **Each loop has four steps, in this order.** Each step must finish before the next one begins.
+- **Each loop has two steps, in this order.** The second step starts only after the first one finishes.
   1. The main thread gets the current Pacific time.
-  2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below) and waits for it to return. Otherwise, it continues to the next step. Checks from 12:50pm onward are end-of-day checks.
-  3. The main thread calculates how many seconds remain until the next check (the schedule's real next run).
-  4. If the next check is more than 10 seconds away, the main thread sleeps until 10 seconds before it (below). Otherwise, it does nothing.
-- **After the close:** if the time in step 1 is at or after 1:00pm, or today has no regular hours, step 2 instead runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet. The loop then ends the run and skips steps 3 and 4.
-- **Ending the run** is always graceful: delete the schedule, start no sleep, and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
-- **The main thread is silent unless there is an error.** Every line it writes is re-read at each later loop, so it displays text only to report an error: a missing dashboard URL or dependency (section 4), a sub-agent that fails, or a sub-agent line that reports an error or END RUN. A loop that goes as planned displays nothing. The one other message is the final message when the run ends.
-- **Each check runs in a sub-agent.** The main thread does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Opus model (in Claude Code, the Agent tool's `model: "opus"`), whatever model the session itself runs, and waits for it to finish. When there is no dashboard URL or a required dependency is missing, it starts none.
-  - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep or change the schedule."
+  2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below). Checks from 12:50pm onward are end-of-day checks.
+- **After the close:** if the time in step 1 is at or after 1:00pm, or today has no regular hours, step 2 instead runs the end-of-day step (section 8) if today had regular hours and its summary isn't written yet. The loop then ends the run.
+- **Ending the run** is always graceful: delete the schedule, stop the keep-alive (below), and post the final message. The run ends after the end-of-day step, on a market holiday, or after 3 consecutive data errors.
+- **The main thread is silent unless there is an error.** Every line it writes is re-read at each later loop, so it displays text only to report an error: a missing dashboard URL or dependency (section 4), a sub-agent that fails, or a sub-agent line that reports an error or END RUN. A loop that goes as planned ends its turn with no text at all: no status line, no summary of the check, no note about the keep-alive. The one other message is the final message when the run ends.
+- **Each check runs in a sub-agent.** The main thread does not run checks itself, so its context stays small and its cache reads stay low. For each check, it starts a fresh sub-agent on the Sonnet model (in Claude Code, the Agent tool's `model: "sonnet"`), whatever model the session itself runs, and waits for it to finish. When there is no dashboard URL or a required dependency is missing, it starts none.
+  - Give the sub-agent the dashboard artifact URL, the path to this file, and this instruction: "Run ONE IRRM check. Follow sections 2, 3, 6, 7 and 9, and the market holiday and missed checks rules in section 5. Do not sleep, start background commands or change the schedule."
   - The sub-agent returns ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`. The per-check lines are on the dashboard, so the main thread does not display a line that reports no error.
   - On END RUN, the main thread posts the reason and ends the run.
-  - The end-of-day step (section 8) also runs in an Opus sub-agent.
-- **The sleep in step 4:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it.
-  - **Run the sleep as a background command.** Label it "Waiting for next iteration".
-  - **Never let sleeps overlap.** If an earlier sleep is still running, cancel it before starting the new one (in Claude Code, stop its background task with TaskStop).
-  - **Time it from the schedule's real next run.** The sleep ends 10 seconds before that run. For example, `sleep 230`.
-  - **When a sleep ends,** display nothing.
+  - The end-of-day step (section 8) also runs in a Sonnet sub-agent.
+- **The keep-alive:** never leave the session with nothing running. If no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it. One long background command keeps it running between loops, instead of a new sleep in every loop.
+  - **Start it once,** at the start of the run, before the first loop: a background command that sleeps for just under 2 hours, labeled "Keep-alive". In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
+  - **When it ends,** start a new one the same way, and display nothing. This happens about 3 times a day.
+  - **Only one at a time.** Start a new keep-alive only when the previous one has ended. Never start one in a loop for any other reason.
+  - **At the end of the run,** stop it (in Claude Code, TaskStop).
 - **Market holiday:** if by 6:45am no active symbol's quote has a trade timestamp from today:
   - log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field
   - post that line

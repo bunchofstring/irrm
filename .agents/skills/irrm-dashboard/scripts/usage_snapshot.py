@@ -95,6 +95,16 @@ def rows_for(date, snap, as_of):
     return rows + [total]
 
 
+def write_new_rows(f, kept, new):
+    """Write new to f, after the kept lines already in it."""
+    if kept and not kept[-1].endswith(b"\n"):
+        f.write("\n")
+    w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
+    if not kept:
+        w.writeheader()
+    w.writerows(new)
+
+
 def append_rows(csv_path, date, new):
     """Append new to csv_path, replacing any rows already there for date."""
     lines = []
@@ -109,16 +119,13 @@ def append_rows(csv_path, date, new):
     if len(kept) < len(lines):
         print("usage_snapshot: warning: replacing %d existing rows for %s"
               % (len(lines) - len(kept), date), file=sys.stderr)
-        with open(csv_path, "wb") as f:
-            f.writelines(kept)
+        with open(csv_path, "w", newline="") as f:
+            f.write(b"".join(kept).decode())
+            write_new_rows(f, kept, new)
+        return
 
     with open(csv_path, "a", newline="") as f:
-        if kept and not kept[-1].endswith(b"\n"):
-            f.write("\n")
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
-        if not kept:
-            w.writeheader()
-        w.writerows(new)
+        write_new_rows(f, kept, new)
 
 
 def main():

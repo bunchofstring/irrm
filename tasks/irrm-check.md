@@ -102,7 +102,9 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
    - 5-minute regular-hours bars (open, high, low, close), with enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed)
    - while any strategy on that symbol holds a position: 1-minute regular-hours bars since that position's `stop_order.modified_at`
 
-   If no tool can supply this data, or it is missing, stale or contradictory, apply guardrail 6.
+   **Cross-check 5-minute bars (approved 2026-11-10).** For each completed 5-minute bar, rebuild it from the 1-minute regular-hours bars in the same window (open = first minute's open, high = max high, low = min low, close = last minute's close, volume = sum). If the server's 5-minute bar disagrees with the rebuilt bar on open, high, low, close or volume, use the rebuilt bar, and log in the check's log line that the bar was substituted and why. The bar is not contradictory once it is rebuilt. Fetch the 1-minute bars for the same window as the 5-minute bars.
+
+   If no tool can supply this data, or it is missing, stale or contradictory after that cross-check, apply guardrail 6.
 3. **Compute indicators.** Do this per active symbol, from completed 5-minute bars, as `irrm-indicators` describes. Every strategy on a symbol uses the same values.
 4. **Run each active strategy** under its rule set, independently, in this order:
    1. Sell any position held overnight because end-of-day liquidation was missed.

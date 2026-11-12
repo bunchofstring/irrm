@@ -6,8 +6,7 @@ the Claude Code transcript on disk, and writes one row per model plus a "total"
 row for the given date. Any earlier rows for that date are replaced; all other
 rows are kept as they are.
 
-Claude Code saves the snapshot from time to time, usually at the end of a turn,
-so it covers the run up to the last turn that finished before this script ran.
+It covers the run up to the last turn that finished before this script ran.
 
 Usage:
   python3 usage_snapshot.py --date YYYY-MM-DD --csv in.csv --out out.csv

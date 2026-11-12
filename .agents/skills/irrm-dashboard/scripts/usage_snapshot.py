@@ -2,9 +2,10 @@
 """Add today's Claude Code usage to usage_daily.csv.
 
 Reads the session's latest usage snapshot, the same numbers /usage shows, from
-the Claude Code transcript on disk, and writes one row per model plus a "total"
-row for the given date. Any earlier rows for that date are replaced; all other
-rows are kept as they are.
+the Claude Code transcript on disk, and appends one row per model plus a
+"total" row for the given date. The existing rows are copied byte for byte and
+never rewritten. If the file already has rows for that date, or its header
+differs, nothing is written and the script exits with an error.
 
 It covers the run up to the last turn that finished before this script ran.
 
@@ -20,6 +21,7 @@ import csv
 import glob
 import json
 import os
+import shutil
 import sys
 
 COLUMNS = [
@@ -91,15 +93,28 @@ def rows_for(date, snap, as_of):
 
 
 def append_rows(csv_path, out_path, date, new):
-    """Write csv_path's rows for other dates, then new, to out_path."""
-    kept = []
-    if os.path.exists(csv_path):
+    """Copy csv_path to out_path unchanged, then append new at the end."""
+    has_rows = os.path.exists(csv_path) and os.path.getsize(csv_path) > 0
+    needs_newline = False
+    if has_rows:
         with open(csv_path, newline="") as f:
-            kept = [r for r in csv.DictReader(f) if r.get("date") != date]
-    with open(out_path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore")
-        w.writeheader()
-        w.writerows(kept + new)
+            reader = csv.reader(f)
+            if next(reader, None) != COLUMNS:
+                sys.exit("usage_snapshot: %s has a different header; nothing written" % csv_path)
+            if any(row and row[0] == date for row in reader):
+                sys.exit("usage_snapshot: %s already has rows for %s; nothing written" % (csv_path, date))
+        with open(csv_path, "rb") as f:
+            f.seek(-1, os.SEEK_END)
+            needs_newline = f.read(1) != b"\n"
+        if os.path.abspath(csv_path) != os.path.abspath(out_path):
+            shutil.copyfile(csv_path, out_path)
+    with open(out_path, "a" if has_rows else "w", newline="") as f:
+        if needs_newline:
+            f.write("\n")
+        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
+        if not has_rows:
+            w.writeheader()
+        w.writerows(new)
 
 
 def main():

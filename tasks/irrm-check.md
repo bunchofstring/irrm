@@ -53,6 +53,7 @@ Before the first check, confirm that each dependency is available. If a required
 | Strategy rules | yes | The rule set file named in each row of `strategy/ACTIVE.md` | — |
 | Paper fills, stops and liquidation | yes | — | `.agents/skills/irrm-paper-trading/` |
 | End-of-day summary | yes | — | `.agents/skills/irrm-summary/` |
+| The run's own usage (the numbers `/usage` shows) | no | Claude Code's session transcript, read by a script | `.agents/skills/irrm-dashboard/` |
 | Dashboard CSV files | no | The Artifact tool: asset upload, read and delete | `.agents/skills/irrm-dashboard/` |
 
 Load a tool's schema before calling it (in Claude Code, with ToolSearch).
@@ -127,7 +128,7 @@ Log every check, one line per active strategy, including when it takes no action
 
 ## 8. End of day
 
-The end-of-day step runs in the first loop at or after the 1:00pm Pacific close. It runs in a sub-agent, which updates the dashboard's CSV files, the only time in the day it does so, with open positions marked at the close (as `irrm-dashboard` describes). It then writes the summary described in `irrm-summary` into today's day doc `summary` field and returns it. The session makes that summary its final message and ends the run (section 5).
+The end-of-day step runs in the first loop at or after the 1:00pm Pacific close. It runs in a sub-agent, which updates the dashboard's CSV files, the only time in the day it does so, with open positions marked at the close and the run's usage so far (as `irrm-dashboard` describes). It then writes the summary described in `irrm-summary` into today's day doc `summary` field and returns it. The session makes that summary its final message and ends the run (section 5).
 
 ## 9. Errors
 

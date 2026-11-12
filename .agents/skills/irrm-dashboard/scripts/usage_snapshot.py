@@ -90,6 +90,18 @@ def rows_for(date, snap, as_of):
     return rows + [total]
 
 
+def append_rows(csv_path, out_path, date, new):
+    """Write csv_path's rows for other dates, then new, to out_path."""
+    kept = []
+    if os.path.exists(csv_path):
+        with open(csv_path, newline="") as f:
+            kept = [r for r in csv.DictReader(f) if r.get("date") != date]
+    with open(out_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(kept + new)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", required=True)
@@ -105,15 +117,8 @@ def main():
     if not snap:
         sys.exit("usage_snapshot: the transcript has no usage snapshot yet")
 
-    kept = []
-    if os.path.exists(a.csv):
-        with open(a.csv, newline="") as f:
-            kept = [r for r in csv.DictReader(f) if r.get("date") != a.date]
     new = rows_for(a.date, snap, as_of)
-    with open(a.out, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore")
-        w.writeheader()
-        w.writerows(kept + new)
+    append_rows(a.csv, a.out, a.date, new)
     print("%s usage as of %s: $%.2f total" % (a.date, as_of, new[-1]["cost_usd"]))
 
 

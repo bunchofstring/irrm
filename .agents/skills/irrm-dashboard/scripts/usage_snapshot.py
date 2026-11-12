@@ -3,17 +3,17 @@
 
 Reads the session's latest usage snapshot, the same numbers /usage shows, from
 the Claude Code transcript on disk, and appends one row per model plus a
-"total" row for the given date. Rows for other dates are copied byte for byte.
-Rows already there for the given date are replaced, with a warning on stderr.
-If the file's header differs, nothing is written and the script exits with an
-error.
+"total" row for the given date to the CSV file, in place. Rows for other dates
+are left as they are. Rows already there for the given date are replaced, with
+a warning on stderr. If the file's header differs, nothing is written and the
+script exits with an error.
 
 It reads only the transcript of the session it runs in (or the file given with
 --transcript), so it can't record another session's usage. It covers the run up
 to the last turn that finished before this script ran.
 
 Usage:
-  python3 usage_snapshot.py --date YYYY-MM-DD --csv in.csv --out out.csv
+  python3 usage_snapshot.py --date YYYY-MM-DD --csv usage_daily.csv
   (--csv may name a file that does not exist yet; --transcript overrides the
   transcript path)
 
@@ -23,10 +23,8 @@ import argparse
 import csv
 import glob
 import json
-import io
 import os
 import sys
-import tempfile
 
 COLUMNS = [
     "date", "model", "cost_usd", "input_tokens", "output_tokens",
@@ -97,13 +95,8 @@ def rows_for(date, snap, as_of):
     return rows + [total]
 
 
-def append_rows(csv_path, out_path, date, new):
-    """Copy csv_path's other rows to out_path unchanged and add new at the end.
-
-    Rows already there for date are dropped, with a warning. The output is
-    written to a temporary file and then moved into place, so a failed run
-    never leaves a partial file.
-    """
+def append_rows(csv_path, date, new):
+    """Append new to csv_path, replacing any rows already there for date."""
     lines = []
     if os.path.exists(csv_path):
         with open(csv_path, "rb") as f:
@@ -116,27 +109,22 @@ def append_rows(csv_path, out_path, date, new):
     if len(kept) < len(lines):
         print("usage_snapshot: warning: replacing %d existing rows for %s"
               % (len(lines) - len(kept), date), file=sys.stderr)
-    if kept and not kept[-1].endswith(b"\n"):
-        kept[-1] += b"\n"
+        with open(csv_path, "wb") as f:
+            f.writelines(kept)
 
-    buf = io.StringIO()
-    w = csv.DictWriter(buf, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
-    if not kept:
-        w.writeheader()
-    w.writerows(new)
-
-    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(out_path)))
-    with os.fdopen(fd, "wb") as f:
-        f.writelines(kept)
-        f.write(buf.getvalue().encode())
-    os.replace(tmp, out_path)
+    with open(csv_path, "a", newline="") as f:
+        if kept and not kept[-1].endswith(b"\n"):
+            f.write("\n")
+        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
+        if not kept:
+            w.writeheader()
+        w.writerows(new)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", required=True)
     ap.add_argument("--csv", required=True)
-    ap.add_argument("--out", required=True)
     ap.add_argument("--transcript")
     a = ap.parse_args()
 
@@ -148,7 +136,7 @@ def main():
         sys.exit("usage_snapshot: the transcript has no usage snapshot yet")
 
     new = rows_for(a.date, snap, as_of)
-    append_rows(a.csv, a.out, a.date, new)
+    append_rows(a.csv, a.date, new)
     print("%s usage as of %s: $%.2f total" % (a.date, as_of, new[-1]["cost_usd"]))
 
 

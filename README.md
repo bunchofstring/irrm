@@ -1,6 +1,6 @@
 # IRRM
 
-IRRM is an AI-run paper-trading system for Donovan. On every trading day, a scheduled task runs a check every 4 minutes. Each check applies several trading strategies side by side to live market data and records hypothetical trades in a dashboard. After the close, it posts a summary that compares the strategies.
+IRRM is an AI-run paper-trading system for Donovan. On every trading day, a scheduled task runs a check every 4 minutes. Each check applies several trading strategies side by side to live market data and records hypothetical trades in a dashboard. After the close, it posts a summary that compares the strategies, and the dashboard also charts what each day's run used (tokens, time and Claude Code's cost estimate).
 
 **It never trades real money.** It uses read-only market data, and every trade is recorded only in the dashboard. Any change to how it behaves needs a human maintainer's approval.
 

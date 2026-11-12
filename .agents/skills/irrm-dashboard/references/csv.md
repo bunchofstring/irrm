@@ -37,7 +37,7 @@ Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl
 ## Updating at the end of the day
 
 1. **Download** the current files from the three dataset docs' `source.url`. Save them to disk and work on them with Python, not in your context.
-2. **Add the missing days** to the two P&L files. Keep every existing row exactly as it is. For each trading day after the last day in the files, through today, add rows built from that day's trade docs and closing prices, and today's from the state docs too:
+2. **Add the missing days** to `daily_pnl.csv` and `hourly_pnl.csv`. Keep every existing row exactly as it is. For each trading day after the last day in the files, through today, add rows built from that day's trade docs and closing prices, and today's from the state docs too:
    - daily: one row per active strategy, with open positions marked at that day's close
    - hourly: one row per active strategy for each hour ending from `07:00` through `13:00`
    - A strategy new to the active list starts with `cum_pnl` 0.

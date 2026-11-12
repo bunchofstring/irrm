@@ -105,8 +105,8 @@ def write_new_rows(f, kept, new):
     w.writerows(new)
 
 
-def append_rows(csv_path, date, new):
-    """Append new to csv_path, replacing any rows already there for date."""
+def set_day_rows(csv_path, date, new):
+    """Set date's rows in csv_path to new: replace any already there, else append."""
     lines = []
     if os.path.exists(csv_path):
         with open(csv_path, "rb") as f:
@@ -143,7 +143,7 @@ def main():
         sys.exit("usage_snapshot: the transcript has no usage snapshot yet")
 
     new = rows_for(a.date, snap, as_of)
-    append_rows(a.csv, a.date, new)
+    set_day_rows(a.csv, a.date, new)
     print("%s usage as of %s: $%.2f total" % (a.date, as_of, new[-1]["cost_usd"]))
 
 

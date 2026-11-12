@@ -39,10 +39,11 @@ def find_transcript():
     root = os.path.expanduser("~/.claude/projects")
     sid = os.environ.get("CLAUDE_CODE_SESSION_ID")
     if sid:
+        # Never fall back here: another session's file would be recorded
+        # under this session's name.
         hits = glob.glob(os.path.join(root, "*", sid + ".jsonl"))
-        if hits:
-            return hits[0]
-    # Fallback: the newest main-session transcript (sub-agent ones live deeper).
+        return hits[0] if hits else None
+    # No session ID: the newest main-session transcript (sub-agent ones live deeper).
     hits = glob.glob(os.path.join(root, "*", "*.jsonl"))
     return max(hits, key=os.path.getmtime) if hits else None
 

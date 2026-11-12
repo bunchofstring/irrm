@@ -8,7 +8,9 @@ Rows already there for the given date are replaced, with a warning on stderr.
 If the file's header differs, nothing is written and the script exits with an
 error.
 
-It covers the run up to the last turn that finished before this script ran.
+It reads only the transcript of the session it runs in (or the file given with
+--transcript), so it can't record another session's usage. It covers the run up
+to the last turn that finished before this script ran.
 
 Usage:
   python3 usage_snapshot.py --date YYYY-MM-DD --csv in.csv --out out.csv

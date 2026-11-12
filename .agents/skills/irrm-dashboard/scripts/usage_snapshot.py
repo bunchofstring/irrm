@@ -67,11 +67,17 @@ def rows_for(date, snap, as_of):
             "output_tokens": u.get("outputTokens", 0),
             "cache_read_tokens": u.get("cacheReadInputTokens", 0),
             "cache_write_tokens": u.get("cacheCreationInputTokens", 0),
-            "api_duration_s": "", "wall_duration_s": "",
-            "lines_added": "", "lines_removed": "",
+            "api_duration_s": "",
+            "wall_duration_s": "",
+            "lines_added": "",
+            "lines_removed": "",
             "as_of": as_of or "",
         })
-    total = {"date": date, "model": "total", "as_of": as_of or ""}
+    total = {
+        "date": date,
+        "model": "total",
+        "as_of": as_of or "",
+    }
     for col in ("input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens"):
         total[col] = sum(r[col] for r in rows)
     total.update({

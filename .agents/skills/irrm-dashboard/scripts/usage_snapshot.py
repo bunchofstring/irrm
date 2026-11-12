@@ -3,9 +3,10 @@
 
 Reads the session's latest usage snapshot, the same numbers /usage shows, from
 the Claude Code transcript on disk, and appends one row per model plus a
-"total" row for the given date. The existing rows are copied byte for byte and
-never rewritten. If the file already has rows for that date, or its header
-differs, nothing is written and the script exits with an error.
+"total" row for the given date. Rows for other dates are copied byte for byte.
+Rows already there for the given date are replaced, with a warning on stderr.
+If the file's header differs, nothing is written and the script exits with an
+error.
 
 It covers the run up to the last turn that finished before this script ran.
 
@@ -20,9 +21,10 @@ import argparse
 import csv
 import glob
 import json
+import io
 import os
-import shutil
 import sys
+import tempfile
 
 COLUMNS = [
     "date", "model", "cost_usd", "input_tokens", "output_tokens",
@@ -93,28 +95,38 @@ def rows_for(date, snap, as_of):
 
 
 def append_rows(csv_path, out_path, date, new):
-    """Copy csv_path to out_path unchanged, then append new at the end."""
-    has_rows = os.path.exists(csv_path) and os.path.getsize(csv_path) > 0
-    needs_newline = False
-    if has_rows:
-        with open(csv_path, newline="") as f:
-            reader = csv.reader(f)
-            if next(reader, None) != COLUMNS:
-                sys.exit("usage_snapshot: %s has a different header; nothing written" % csv_path)
-            if any(row and row[0] == date for row in reader):
-                sys.exit("usage_snapshot: %s already has rows for %s; nothing written" % (csv_path, date))
+    """Copy csv_path's other rows to out_path unchanged and add new at the end.
+
+    Rows already there for date are dropped, with a warning. The output is
+    written to a temporary file and then moved into place, so a failed run
+    never leaves a partial file.
+    """
+    lines = []
+    if os.path.exists(csv_path):
         with open(csv_path, "rb") as f:
-            f.seek(-1, os.SEEK_END)
-            needs_newline = f.read(1) != b"\n"
-        if os.path.abspath(csv_path) != os.path.abspath(out_path):
-            shutil.copyfile(csv_path, out_path)
-    with open(out_path, "a" if has_rows else "w", newline="") as f:
-        if needs_newline:
-            f.write("\n")
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
-        if not has_rows:
-            w.writeheader()
-        w.writerows(new)
+            lines = f.read().splitlines(keepends=True)
+    if lines and next(csv.reader([lines[0].decode()])) != COLUMNS:
+        sys.exit("usage_snapshot: %s has a different header; nothing written" % csv_path)
+
+    prefix = (date + ",").encode()
+    kept = [line for line in lines if not line.startswith(prefix)]
+    if len(kept) < len(lines):
+        print("usage_snapshot: warning: replacing %d existing rows for %s"
+              % (len(lines) - len(kept), date), file=sys.stderr)
+    if kept and not kept[-1].endswith(b"\n"):
+        kept[-1] += b"\n"
+
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=COLUMNS, extrasaction="ignore", lineterminator="\n")
+    if not kept:
+        w.writeheader()
+    w.writerows(new)
+
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(out_path)))
+    with os.fdopen(fd, "wb") as f:
+        f.writelines(kept)
+        f.write(buf.getvalue().encode())
+    os.replace(tmp, out_path)
 
 
 def main():

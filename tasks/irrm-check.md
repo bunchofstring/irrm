@@ -4,6 +4,21 @@ This is the scheduled task. It runs a loop every 4 minutes until the close, and 
 
 Work unattended. When in doubt, take NO ACTION and log why.
 
+## 0. Session start (main thread, before anything else)
+
+Do these steps in order at the start of every scheduled session, before the first loop. Do not skip one. Do not run a check until step 3 has passed.
+
+1. **Start the loop.** Invoke the `loop` skill with the Skill tool, `args: "4m Run ONE IRRM loop"`. This is the slash command `/loop 4m Run ONE IRRM loop`.
+2. **Confirm the loop.** Call `CronList`. Expect one job whose prompt contains `Run ONE IRRM loop`.
+   - If none is listed, invoke the loop skill once more and call `CronList` again.
+   - If still none, post an error and take no trading action. Stop here.
+   - If more than one is listed, call `CronDelete` on the newer duplicates and keep the oldest.
+3. **Print the loop status** in the thread, once, from the `CronList` output: `LOOP scheduled — job <id>, cron <cron>, next run <time>`. This is the one status line the main thread prints at session start, even though it is otherwise silent. Do not write any state for it: no `bot/check` or other dashboard writes.
+4. **Keep-alive.** Start the keep-alive (section 5).
+5. **First loop.** Run the first check (section 5, step 2 onward).
+
+If step 1 or 2 fails, post the error line and take NO ACTION at any check. Keep the schedule running, so a later firing can recover.
+
 ## 1. Inputs
 
 - **Dashboard artifact URL:** given in the scheduled task's prompt as `Dashboard artifact: <url>`.
@@ -64,7 +79,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
   - A **loop** fires every 4 minutes. The main thread (the scheduled session) runs it.
   - A **check** is the trading work: one pass over every active strategy (section 6). A loop performs a check only when it fires during regular hours.
   - Loops run whenever the routine runs, including outside regular hours. They continue until regular hours end, then the run ends itself gracefully.
-- **Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
+- **Schedule:** `/loop 4m Run ONE IRRM loop`, started by the session-start gate in section 0. Run the first loop after that gate passes, then let the schedule fire the rest. Loops continue until the close, even if there is an error.
 - **Each loop has two steps, in this order.** The second step starts only after the first one finishes.
   1. The main thread gets the current Pacific time.
   2. If that time is within regular hours, the main thread uses a sub-agent to perform one check (below). Checks from 12:50pm onward are end-of-day checks.

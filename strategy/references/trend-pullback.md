@@ -1,6 +1,6 @@
 # "Trend pullback"
 
-Buy a MACD bullish crossover from below zero while price holds above EMA200: a dip that turns back up inside an uptrend. One position at a time. Never add to an open position.
+Buy a MACD bullish crossover from below zero while price holds above EMA200: a dip that turns back up inside an uptrend. Held overnight until a stop fills. One position at a time. Never add to an open position.
 
 None of the original rule set's stop levels apply to it: no breakeven_plus, principal floor or 2% trailing stop.
 
@@ -31,10 +31,10 @@ None of the original rule set's stop levels apply to it: no breakeven_plus, prin
    - **trailing** = peak_price − 2.5 × atr_at_entry
    - **stop_price** = the highest active level, and never lower than the previous stop_price (it only moves up).
    - **stop_reason** = whichever level set it.
-3. stop_price is the trigger of the position's resting stop-loss order. SELL when that order fills, at its fill price. There is no other exit before end of day.
+3. stop_price is the trigger of the position's resting stop-loss order. SELL when that order fills, at its fill price. There is no other exit.
 
 ## End-of-day liquidation
-Applies. Positions are not held overnight.
+Does NOT apply. Positions may be held overnight, and the resting stop order stays in place. If the price opens below the trigger, the stop fills at the open (the GAP rule in `irrm-paper-trading`). No new position is opened from 12:50pm Pacific onward.
 
 ## Log line additions
 - After the MACD section, add `| Close $x.xx vs EMA200 $x.xx, ATR14 $x.xx`.

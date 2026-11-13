@@ -1,6 +1,6 @@
 # "Opening range breakout"
 
-Buy the first close above the day's 15-minute opening range while MACD momentum is positive, and ride it with an ATR trailing stop. At most one buy per day. Never add to an open position.
+Buy the first close above the day's 15-minute opening range while MACD momentum is positive, and ride it with an ATR trailing stop, overnight if need be. At most one buy per day. Never add to an open position.
 
 Uses the opening range (OR15) from `irrm-indicators`. None of the original rule set's stop levels apply to it.
 
@@ -16,7 +16,7 @@ Uses the opening range (OR15) from `irrm-indicators`. None of the original rule 
 
 ## BUY rule
 1. Only when the strategy has no open position.
-2. Only when last_trade_date is not today.
+2. Only when last_trade_date is not today. A position carried overnight blocks new buys until it is sold.
 3. Only when today's OR15 is complete, and ALL of these hold:
    - the latest completed bar's close > or_high
    - the previous completed bar's close ≤ or_high (a fresh breakout)
@@ -31,10 +31,10 @@ Uses the opening range (OR15) from `irrm-indicators`. None of the original rule 
    - **trailing** = peak_price − 3 × atr_at_entry
    - **stop_price** = the higher of initial and trailing, never lower than the previous stop_price (it only moves up).
    - **stop_reason** = whichever level set it.
-3. stop_price is the trigger of the position's resting stop-loss order. SELL when that order fills, at its fill price. There is no other exit before end of day.
+3. stop_price is the trigger of the position's resting stop-loss order. SELL when that order fills, at its fill price. There is no other exit.
 
 ## End-of-day liquidation
-Applies. Positions are not held overnight.
+Does NOT apply. Positions may be held overnight, and the resting stop order stays in place. If the price opens below the trigger, the stop fills at the open (the GAP rule in `irrm-paper-trading`). No new position is opened from 12:50pm Pacific onward.
 
 ## Log line additions
 - After the MACD section, add `| OR15 $x.xx–$x.xx, Close $x.xx, ATR14 $x.xx`. Before 6:45 Pacific, show `OR15 forming`.

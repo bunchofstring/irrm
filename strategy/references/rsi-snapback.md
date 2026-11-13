@@ -1,6 +1,6 @@
 # "RSI snapback"
 
-Buy the first turn up out of a deep oversold reading and sell when RSI recovers to neutral. A short mean-reversion trade with a time stop. One position at a time. Never add to an open position.
+Buy the first turn up out of a deep oversold reading and sell when RSI recovers to neutral. A short mean-reversion trade with a time stop; it may be held overnight. One position at a time. Never add to an open position.
 
 Unlike the bounce mode of `regime-switch.md`, it trades in any regime (above or below EMA200), needs a deeper oversold reading, and exits on RSI recovery or a time stop instead of an ATR take-profit. None of the original rule set's stop levels apply to it.
 
@@ -32,11 +32,11 @@ Unlike the bounce mode of `regime-switch.md`, it trades in any regime (above or 
 3. SELL when the first of these happens:
    - The resting stop-loss order fills. The reason is stop_reason, at the fill price.
    - **RSI target:** at a check, RSI14 of the latest completed bar ≥ 55. The reason is "rsi_target", and it fills at the current bid.
-   - **Time stop:** at a check at least 60 minutes after entry_time, the current bid < cost_price. The reason is "time", and it fills at the current bid.
+   - **Time stop:** at a check at least 60 regular-hours minutes after entry_time (time outside 6:30am–1:00pm Pacific does not count), the current bid < cost_price. The reason is "time", and it fills at the current bid.
 
 ## End-of-day liquidation
-Applies. Positions are not held overnight.
+Does NOT apply. Positions may be held overnight, and the resting stop order stays in place. If the price opens below the trigger, the stop fills at the open (the GAP rule in `irrm-paper-trading`). No new position is opened from 12:50pm Pacific onward.
 
 ## Log line additions
 - After the MACD section, add `| RSI14 00.0 (prev 00.0), ATR14 $x.xx`.
-- The Pos part shows the minutes held.
+- The Pos part shows the regular-hours minutes held.

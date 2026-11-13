@@ -1,6 +1,6 @@
 ---
 name: irrm-indicators
-description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14 and ATR14 from 5-minute bars. Use whenever an IRRM check, backtest or analysis needs indicator values.
+description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14, ATR14 and the opening range (OR15) from 5-minute bars. Use whenever an IRRM check, backtest or analysis needs indicator values.
 ---
 
 # IRRM indicators
@@ -31,3 +31,10 @@ Wilder's RSI of closes:
 The simple average of the true range of the last 14 completed bars.
 
 True range = max(high − low, |high − previous close|, |low − previous close|).
+
+## Opening range (OR15)
+
+The high and low of today's first three completed regular-hours 5-minute bars (6:30–6:45 Pacific).
+- **or_high** = the highest high of those three bars; **or_low** = their lowest low.
+- It is complete once the bar ending 6:45 Pacific has completed. Before then, it is still forming and must not be used.
+- It uses today's bars only, never previous sessions.

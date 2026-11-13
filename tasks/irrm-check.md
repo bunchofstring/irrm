@@ -13,7 +13,7 @@ Do these steps in order at the start of every scheduled session, before the firs
    - If none is listed, invoke the loop skill once more and call `CronList` again.
    - If still none, post an error and take no trading action. Stop here.
    - If more than one is listed, call `CronDelete` on the newer duplicates and keep the oldest.
-3. **Log the loop status.** Read `bot/check` with ArtifactData, then update it with `loop_job_id`, `loop_cron`, `loop_next_run` (from the `CronList` output) and `loop_status: "scheduled"`, pinned to the version you read. Use `if_version`. If the write fails, retry once, and if it still fails, post an error and take no trading action.
+3. **Print the loop status** in the thread, once, from the `CronList` output: `LOOP scheduled — job <id>, cron <cron>, next run <time>`. This is the one status line the main thread prints at session start, even though it is otherwise silent. Do not write any state for it: no `bot/check` or other dashboard writes.
 4. **Keep-alive.** Start the keep-alive (section 5).
 5. **First loop.** Run the first check (section 5, step 2 onward).
 

@@ -1,6 +1,6 @@
 ---
 name: irrm-indicators
-description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14, ATR14 and the opening range (OR15) from 5-minute bars. Use whenever an IRRM check, backtest or analysis needs indicator values.
+description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14, ATR14, the opening range (OR15) and the previous session close from 5-minute bars. Use whenever an IRRM check, backtest or analysis needs indicator values.
 ---
 
 # IRRM indicators
@@ -38,3 +38,7 @@ The high and low of today's first three completed regular-hours 5-minute bars (6
 - **or_high** = the highest high of those three bars; **or_low** = their lowest low.
 - It is complete once the bar ending 6:45 Pacific has completed. Before then, it is still forming and must not be used.
 - It uses today's bars only, never previous sessions.
+
+## Previous session close (prev_close)
+
+The close of the last completed regular-hours 5-minute bar of the previous trading session. That is normally the bar ending 1:00pm Pacific, or on a half-day, the bar ending at that day's early close. It is the same price for the whole of today's session. Use the bars already fetched for the other indicators; never use an extended-hours bar.

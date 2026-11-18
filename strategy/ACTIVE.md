@@ -8,6 +8,8 @@ This is the only place that names the live strategies and their symbols. Every o
 | early | CBRS early | CBRS | early | bot/state_early | lines_early |
 | regime | CBRS regime switch | CBRS | regime-switch | bot/state_regime | lines_regime |
 | bnh | AMZN buy & hold | AMZN | buy-and-hold | bot/state_bnh | lines_bnh |
+| qon | QQQ overnight hold | QQQ | overnight-hold | bot/state_qon | lines_qon |
+| qbnh | QQQ buy & hold | QQQ | buy-and-hold | bot/state_qbnh | lines_qbnh |
 
 ## Columns
 

@@ -2,7 +2,7 @@
 
 This is the scheduled task. It runs a loop every 4 minutes until the close. Each loop decides whether a check is warranted and, if it is, starts a sub-agent to perform it. The check itself is described in `tasks/irrm-check-procedure.md`.
 
-**Do not open `tasks/irrm-check-procedure.md` in the main thread.** It is opened only when a check (or the end-of-day step) is warranted, and only by the sub-agent that performs it. The main thread just passes its path.
+**Open `tasks/irrm-check-procedure.md` only when a check (or the end-of-day step) is warranted** (section 3).
 
 Work unattended. When in doubt, take NO ACTION and log why. The loop itself never trades: it calls no market-data, order or dashboard tool.
 

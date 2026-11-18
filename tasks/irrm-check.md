@@ -4,7 +4,7 @@ This is the scheduled task. It runs a loop every 4 minutes until the close. Each
 
 **Open `tasks/irrm-check-procedure.md` only when a check (or the end-of-day step) is warranted** (section 3).
 
-Work unattended. When in doubt, take NO ACTION and log why. The loop itself never trades: it calls no market-data, order or dashboard tool.
+Work unattended. The loop's only responsibilities are repetition and determining when a check is warranted. It is intentionally ignorant of analysis, dashboards and trading.
 
 ## 1. Inputs
 

@@ -1,6 +1,6 @@
 # IRRM check
 
-This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm Pacific close. Its only responsibilities are repetition and determining when a check is warranted. It is intentionally ignorant of analysis, dashboards and trading. Work unattended.
+This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm Pacific close. Its only responsibilities are repetition, determining when a check is warranted, and triggering that check. It is intentionally ignorant of analysis, dashboards and trading. Work unattended.
 
 **Open `tasks/irrm-check-procedure.md` only when a check (or the end-of-day step) is warranted** (section 3).
 

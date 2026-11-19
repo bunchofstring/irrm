@@ -17,7 +17,7 @@ Replay one or more rule sets over historical data. The "rule set" column of `str
 
 ## Method
 
-1. **Agree the scope with the human:** rule sets, symbols, date range, starting balance (default $5.00 principal) and cap (default $100.00). If the human gives only an end date ("through 2025"), the range starts at the earliest date the data supports after warm-up; say which date that is.
+1. **Agree the scope with the human:** rule sets, symbols, date range, starting balance (default $5.00 principal) and cap (default $100.00).
 2. **Fetch the data.** Get 5-minute regular-hours bars for the range, plus enough earlier history to warm up the indicators (at least 400 completed bars). Get 1-minute bars for fills and the stop fill test, daily bars for valuation, dividends for each symbol, and the 3-month Treasury bill yield. See **Data** below.
 3. **Step through the data.** Step through each check on the check grid, and apply each rule set as the live check would. Follow **Conventions** below exactly, so that two backtests of the same scope give the same numbers.
 4. **State any departure.** If the data or the human's request forces a departure from a convention, say which one, why, and how it may flatter or penalize the results.

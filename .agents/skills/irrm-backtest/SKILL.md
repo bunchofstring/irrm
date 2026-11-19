@@ -25,7 +25,6 @@ Replay one or more rule sets over historical data. The "rule set" column of `str
 
 ## Data
 
-Prefer the BigQuery dataset `irrm-515119.irrm_market_data`, read with read-only SQL:
 - `minute_bars`: 1-minute regular-hours bars. `ts` is the bar's **start** time in UTC, so the bar stamped 12:40 PT covers 12:40:00–12:41:00. Its open is the first price after 12:40:00, and it is completed at 12:41. Convert to Pacific with `America/Los_Angeles`.
 - `daily_bars`: daily regular-hours bars, split-adjusted. `close` is the official close.
 - `earnings_dates`: earnings report dates.

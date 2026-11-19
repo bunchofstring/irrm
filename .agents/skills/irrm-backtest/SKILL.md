@@ -18,16 +18,11 @@ Replay one or more rule sets over historical data. The "rule set" column of `str
 ## Method
 
 1. **Agree the scope with the human:** rule sets, symbols, date range, starting balance (default $5.00 principal) and cap (default $100.00).
-2. **Fetch the data.** Get 5-minute regular-hours bars for the range, plus enough earlier history to warm up the indicators (at least 400 completed bars). Get 1-minute bars for the stop fill test.
-3. **Step through the data.** Step through each check during regular hours, and apply each rule set as the live check would. Only use bars completed by that time.
-4. **State your assumptions.** Historical bid and ask quotes are often unavailable. Say what you used instead (for example, the 1-minute close for both), and say how that may flatter or penalize the results.
-5. **Report per rule set:**
-   - trades
-   - wins and losses
-   - total and per-day P&L
-   - largest loss
-   - ending balance
-   - a head-to-head comparison
+2. **Read `references/conventions.md`** before fetching any data. It covers the data, check grid, fills and costs, valuation and returns, benchmark, validity rules and what the report must include.
+3. **Fetch the data:** 5-minute regular-hours bars for the range plus at least 400 earlier completed bars to warm up the indicators, 1-minute bars for fills and stops, daily bars for valuation, dividends, and the 3-month Treasury bill yield.
+4. **Step through the data.** Apply each rule set at each check as the live check would. Follow the conventions exactly, so that two backtests of the same scope give the same numbers.
+5. **State any departure.** If the data or the human's request forces a departure from a convention, say which one, why, and how it may flatter or penalize the results.
+6. **Report** as the conventions' Report section describes.
 
 ## Changing strategies
 

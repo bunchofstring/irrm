@@ -4,6 +4,19 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 
 **Open `tasks/irrm-check-procedure.md` only when a check (or the end-of-day step) is warranted** (section 3).
 
+## 0. Setup (main thread, once per session, before the first loop)
+
+Do these steps in order at the start of every scheduled session. Do not skip one. Do not run a loop until step 2 has passed. Setup runs once per session: a loop that the schedule fires ("Run ONE IRRM loop") skips this section.
+
+1. **Start the loop.** Invoke the `loop` skill with the Skill tool, `args: "4m Run ONE IRRM loop"`. This is the slash command `/loop 4m Run ONE IRRM loop`.
+2. **Confirm the loop.** Call `CronList`. Expect exactly one job whose prompt contains `Run ONE IRRM loop`.
+   - If none is listed, invoke the `loop` skill once more and call `CronList` again.
+   - If still none is listed, post an error line that says the loop could not be scheduled, and end the run: start no keep-alive and run no check.
+   - If more than one is listed, call `CronDelete` on the newer duplicates and keep the oldest.
+3. **Print the loop status** once, from the `CronList` output: `LOOP scheduled — job <id>, cron <cron>, next run <time>`. Omit the next run if `CronList` does not show it. This is the one status line the main thread prints outside section 6. Write no state for it.
+4. **Keep-alive.** Start the keep-alive (section 5).
+5. **First loop.** Run the first loop now (section 4), then let the schedule fire the rest.
+
 ## 1. Inputs
 
 The dashboard artifact URL is given in the scheduled task's prompt as `Dashboard artifact: <url>`. If the prompt gives no URL, or gives `<TBD>`, display these setup instructions at the start of the run and repeat them in the final message:
@@ -34,7 +47,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 4. One loop
 
-**Schedule:** `/loop 4m Run ONE IRRM loop`. Run the first loop at the start of the session, then let the schedule fire the rest, including outside regular hours and after an error, until the run ends (section 5).
+**Schedule:** `/loop 4m Run ONE IRRM loop`, started and confirmed by setup (section 0). Run the first loop when setup passes, then let the schedule fire the rest, including outside regular hours and after an error, until the run ends (section 5).
 
 Each loop has two steps. The second starts only after the first finishes.
 1. The main thread (the scheduled session) gets the current Pacific time.
@@ -50,13 +63,14 @@ For the end-of-day step, replace "ONE IRRM check" with "the IRRM end-of-day step
 
 ## 5. Keep-alive and ending the run
 
-- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it before the first loop, and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
+- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it in setup (section 0, step 4), before the first loop, and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
 - **The run ends** in the first loop at or after 1:00pm, on a day with no regular hours, or when a check returns END RUN (a market holiday, or 3 consecutive data errors). End it gracefully: delete the schedule, stop the keep-alive (in Claude Code, TaskStop), and post the final message.
 
 ## 6. Silence
 
 Every line the main thread writes is re-read at each later loop, so it displays text only:
-- **to report an error:** a missing dashboard URL or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
+- **once at setup,** the loop status line (section 0, step 3).
+- **to report an error:** a loop that could not be scheduled, a missing dashboard URL or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
 - **in the final message,** which names any missing dependency, including any a check reported.
 
 A loop that goes as planned ends its turn with no text at all: no status line, no summary of the check, no note about the keep-alive.

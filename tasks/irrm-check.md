@@ -11,7 +11,7 @@ Do these steps in order at the start of every scheduled session. Do not skip one
 1. **Start the keep-alive** (section 6).
 2. **Start the loop** (section 5).
 3. **Confirm the loop.** Expect exactly one loop job.
-   - If there is none, start the loop once more and confirm again. Do not run another first iteration.
+   - If there is none, start the loop once more and confirm again.
    - If there is still none, post an error line that says the loop could not be started, and end the run (section 6).
    - If there is more than one, delete the newer duplicates and keep the oldest.
 4. **Print the loop status** once: `LOOP started — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.

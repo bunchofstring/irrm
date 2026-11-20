@@ -8,14 +8,14 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 
 Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
-1. **Start the schedule** (section 5).
-2. **Confirm the schedule.** Expect exactly one scheduled loop job.
-   - If there is none, start the schedule once more and confirm again.
-   - If there is still none, post an error line that says the loop could not be scheduled, and end the run: start no keep-alive and run no check.
+1. **Start the loop** (section 5).
+2. **Confirm the loop.** Expect exactly one loop job.
+   - If there is none, start the loop once more and confirm again.
+   - If there is still none, post an error line that says the loop could not be started, and end the run: start no keep-alive and run no check.
    - If there is more than one, delete the newer duplicates and keep the oldest.
-3. **Print the schedule status** once: `LOOP scheduled — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
+3. **Print the loop status** once: `LOOP started — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
 4. **Start the keep-alive** (section 6).
-5. **Run the first loop** (section 5), then let the schedule fire the rest.
+5. **Run the first loop** (section 5), then let the loop fire the rest.
 
 ## 2. Inputs
 
@@ -33,7 +33,7 @@ Before the first loop, confirm that each dependency below is available. The chec
 | Need | Required | Suggested connector or tool |
 |---|---|---|
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` |
-| Recurring schedule that can be started, listed and deleted | yes | In Claude Code, the `loop` skill, `CronList` and `CronDelete` (section 5) |
+| Recurring loop that can be started, listed and deleted | yes | In Claude Code, the `loop` skill, `CronList` and `CronDelete` (section 5) |
 | Keep-alive between loops | yes | A background command (section 6) |
 | Sub-agents | no | In Claude Code, the Agent tool. Without it, the session opens `tasks/irrm-check-procedure.md` and performs each warranted check itself. |
 
@@ -47,9 +47,9 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 5. One loop
 
-**Schedule:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 1) starts it, confirms it and runs the first loop. The schedule fires the rest, including outside regular hours and after an error, until the run ends (section 6).
-- **Start it:** ask the scheduler for a job every 4 minutes with that prompt. In Claude Code: the `loop` skill through the Skill tool, with `args: "4m Run ONE IRRM loop"` (the slash command `/loop 4m Run ONE IRRM loop`).
-- **Confirm it:** list the session's scheduled jobs and keep those whose prompt contains `Run ONE IRRM loop`. Each has an id, a schedule and, if the scheduler shows it, a next run time. In Claude Code: `CronList`.
+**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 1) starts it, confirms it and runs the first loop. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6).
+- **Start it:** create a recurring job every 4 minutes with that prompt. In Claude Code: the `loop` skill through the Skill tool, with `args: "4m Run ONE IRRM loop"` (the slash command `/loop 4m Run ONE IRRM loop`).
+- **Confirm it:** list the session's recurring jobs and keep those whose prompt contains `Run ONE IRRM loop`. Each has an id, a cron expression and, if shown, a next run time. In Claude Code: `CronList`.
 - **Delete it:** remove a job by its id. In Claude Code: `CronDelete`.
 
 Each loop has two steps. The second starts only after the first finishes.
@@ -58,7 +58,7 @@ Each loop has two steps. The second starts only after the first finishes.
 
 **Starting a sub-agent:** start a fresh general-purpose sub-agent on the Sonnet model, whatever model the session runs, naming both explicitly instead of relying on defaults. Start it in blocking mode, never in the background, so the main thread does nothing else until it finishes and gets its report within the loop's own turn. In Claude Code: the Agent tool with `subagent_type: "general-purpose"`, `model: "sonnet"` and `run_in_background: false`. Give it this prompt:
 
-> Run ONE IRRM check as `tasks/irrm-check-procedure.md` describes. Dashboard artifact: `<url>`. Do not sleep, start background commands or change the schedule.
+> Run ONE IRRM check as `tasks/irrm-check-procedure.md` describes. Dashboard artifact: `<url>`. Do not sleep, start background commands or change the loop.
 
 For the end-of-day step, replace "ONE IRRM check" with "the IRRM end-of-day step". For a check, if the previous check's line named a folder of unwritten JSON files, add "Unwritten batch: `<folder>`."
 
@@ -66,14 +66,14 @@ For the end-of-day step, replace "ONE IRRM check" with "the IRRM end-of-day step
 
 ## 6. Keep-alive and ending the run
 
-- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the schedule dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it in setup (section 1, step 4), before the first loop, and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
-- **The run ends** in the first loop at or after 1:00pm, on a day with no regular hours, or when a check returns END RUN (a market holiday, or 3 consecutive data errors). End it gracefully: delete the schedule, stop the keep-alive (in Claude Code, TaskStop), and post the final message.
+- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the loop dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it in setup (section 1, step 4), before the first loop, and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
+- **The run ends** in the first loop at or after 1:00pm, on a day with no regular hours, or when a check returns END RUN (a market holiday, or 3 consecutive data errors). End it gracefully: delete the loop, stop the keep-alive (in Claude Code, TaskStop), and post the final message.
 
 ## 7. Silence
 
 Every line the main thread writes is re-read at each later loop, so it displays text only:
 - **once at setup,** the loop status line (section 1, step 3).
-- **to report an error:** a loop that could not be scheduled, a missing dashboard URL or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
+- **to report an error:** a loop that could not be started, a missing dashboard URL or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
 - **in the final message,** which names any missing dependency, including any a check reported.
 
 A loop that goes as planned ends its turn with no text at all: no status line, no summary of the check, no note about the keep-alive.

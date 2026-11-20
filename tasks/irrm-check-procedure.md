@@ -2,7 +2,7 @@
 
 A check paper-trades every active strategy below and records the result in the dashboard database. This file is opened only by the sub-agent that the loop (`tasks/irrm-check.md`) starts when a check or the end-of-day step is warranted. The loop decides when; this file says what. It knows only what a check needs. For backtesting, analysis and strategy work, see the skills in `.agents/skills/`.
 
-Work unattended. When in doubt, take NO ACTION and log why. Do not sleep, start background commands or change the schedule: the loop owns those.
+Work unattended. When in doubt, take NO ACTION and log why. Do not sleep, start background commands or change the loop: the main thread owns those.
 
 ## 1. Inputs
 

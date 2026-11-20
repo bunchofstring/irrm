@@ -49,7 +49,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 **Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 1) starts it, runs its first iteration immediately and confirms it. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6). In Claude Code, start it with the `loop` skill through the Skill tool, with `args: "4m Run ONE IRRM loop"` (the slash command `/loop 4m Run ONE IRRM loop`).
 - **Confirm it:** list the session's recurring jobs and keep those whose prompt contains `Run ONE IRRM loop`.
-- **Delete it:** remove a job by its id. In Claude Code: `CronDelete`.
+- **Delete it as needed:** remove a job by its id. In Claude Code: `CronDelete`.
 
 Each loop has two steps. The second starts only after the first finishes.
 1. The main thread (the scheduled session) gets the current Pacific time.

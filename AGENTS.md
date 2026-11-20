@@ -38,5 +38,3 @@ When a task may need a skill:
 ## Tasks
 
 Tasks live in `tasks/<name>.md`. Run a task only when a scheduled task's prompt or a human tells you to.
-
-For the scheduled IRRM check (`tasks/irrm-check.md`), read the whole file before any other step. At the start of the session, do its section 0 (setup) first, in order: start the loop, confirm it with CronList, and print its status. Do not run a loop until that gate passes.

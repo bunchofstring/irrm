@@ -4,18 +4,18 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 
 **Open `tasks/irrm-check-procedure.md` only when a check (or the end-of-day step) is warranted** (section 4).
 
-## 1. Setup (main thread, once per session, before the first loop)
+## 1. Setup (main thread, once per session)
 
 Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
 1. **Start the loop** (section 5).
-2. **Confirm the loop.** Expect exactly one loop job.
-   - If there is none, start the loop once more and confirm again.
-   - If there is still none, post an error line that says the loop could not be started, and end the run: start no keep-alive and run no check.
+2. **Run the first iteration** (section 5) immediately after the loop starts. Do not wait for the loop to fire it. The loop fires the rest.
+3. **Confirm the loop.** Expect exactly one loop job.
+   - If there is none, start the loop once more and confirm again. Do not run another first iteration.
+   - If there is still none, post an error line that says the loop could not be started, and end the run: start no keep-alive.
    - If there is more than one, delete the newer duplicates and keep the oldest.
-3. **Print the loop status** once: `LOOP started — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
-4. **Start the keep-alive** (section 6).
-5. **Run the first loop** (section 5), then let the loop fire the rest.
+4. **Print the loop status** once: `LOOP started — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
+5. **Start the keep-alive** (section 6).
 
 ## 2. Inputs
 
@@ -47,7 +47,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 5. One loop
 
-**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 1) starts it, confirms it and runs the first loop. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6).
+**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 1) starts it, runs its first iteration immediately and confirms it. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6).
 - **Start it:** create a recurring job every 4 minutes with that prompt. In Claude Code: the `loop` skill through the Skill tool, with `args: "4m Run ONE IRRM loop"` (the slash command `/loop 4m Run ONE IRRM loop`).
 - **Confirm it:** list the session's recurring jobs and keep those whose prompt contains `Run ONE IRRM loop`. Each has an id, a cron expression and, if shown, a next run time. In Claude Code: `CronList`.
 - **Delete it:** remove a job by its id. In Claude Code: `CronDelete`.
@@ -66,13 +66,13 @@ For the end-of-day step, replace "ONE IRRM check" with "the IRRM end-of-day step
 
 ## 6. Keep-alive and ending the run
 
-- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the loop dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it in setup (section 1, step 4), before the first loop, and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
+- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the loop dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it in setup (section 1, step 5), and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
 - **The run ends** in the first loop at or after 1:00pm, on a day with no regular hours, or when a check returns END RUN (a market holiday, or 3 consecutive data errors). End it gracefully: delete the loop, stop the keep-alive (in Claude Code, TaskStop), and post the final message.
 
 ## 7. Silence
 
 Every line the main thread writes is re-read at each later loop, so it displays text only:
-- **once at setup,** the loop status line (section 1, step 3).
+- **once at setup,** the loop status line (section 1, step 4).
 - **to report an error:** a loop that could not be started, a missing dashboard URL or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
 - **in the final message,** which names any missing dependency, including any a check reported.
 

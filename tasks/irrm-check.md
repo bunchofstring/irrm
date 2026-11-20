@@ -6,7 +6,7 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 
 ## 0. Setup (main thread, once per session, before the first loop)
 
-Do these steps in order at the start of every scheduled session. Do not skip one. Do not run a loop until step 2 has passed. Setup runs once per session: a loop that the schedule fires ("Run ONE IRRM loop") skips this section.
+Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
 1. **Start the loop.** Invoke the `loop` skill with the Skill tool, `args: "4m Run ONE IRRM loop"`. This is the slash command `/loop 4m Run ONE IRRM loop`.
 2. **Confirm the loop.** Call `CronList`. Expect exactly one job whose prompt contains `Run ONE IRRM loop`.

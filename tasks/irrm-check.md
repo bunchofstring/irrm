@@ -8,14 +8,14 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 
 Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
-1. **Start the loop.** Invoke the `loop` skill with the Skill tool, `args: "4m Run ONE IRRM loop"`. This is the slash command `/loop 4m Run ONE IRRM loop`.
-2. **Confirm the loop.** Call `CronList`. Expect exactly one job whose prompt contains `Run ONE IRRM loop`.
-   - If none is listed, invoke the `loop` skill once more and call `CronList` again.
-   - If still none is listed, post an error line that says the loop could not be scheduled, and end the run: start no keep-alive and run no check.
-   - If more than one is listed, call `CronDelete` on the newer duplicates and keep the oldest.
-3. **Print the loop status** once, from the `CronList` output: `LOOP scheduled — job <id>, cron <cron>, next run <time>`. Omit the next run if `CronList` does not show it. This is the one status line the main thread prints outside section 6. Write no state for it.
-4. **Keep-alive.** Start the keep-alive (section 5).
-5. **First loop.** Run the first loop now (section 4), then let the schedule fire the rest.
+1. **Start the schedule** (section 4).
+2. **Confirm the schedule.** Expect exactly one scheduled loop job.
+   - If there is none, start the schedule once more and confirm again.
+   - If there is still none, post an error line that says the loop could not be scheduled, and end the run: start no keep-alive and run no check.
+   - If there is more than one, delete the newer duplicates and keep the oldest.
+3. **Print the schedule status** once: `LOOP scheduled — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
+4. **Start the keep-alive** (section 5).
+5. **Run the first loop** (section 4), then let the schedule fire the rest.
 
 ## 1. Inputs
 
@@ -33,7 +33,7 @@ Before the first loop, confirm that each dependency below is available. The chec
 | Need | Required | Suggested connector or tool |
 |---|---|---|
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` |
-| Recurring schedule | yes | `/loop` |
+| Recurring schedule that can be started, listed and deleted | yes | In Claude Code, the `loop` skill, `CronList` and `CronDelete` (section 4) |
 | Keep-alive between loops | yes | A background command (section 5) |
 | Sub-agents | no | In Claude Code, the Agent tool. Without it, the session opens `tasks/irrm-check-procedure.md` and performs each warranted check itself. |
 
@@ -47,7 +47,10 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 4. One loop
 
-**Schedule:** `/loop 4m Run ONE IRRM loop`, started and confirmed by setup (section 0). Run the first loop when setup passes, then let the schedule fire the rest, including outside regular hours and after an error, until the run ends (section 5).
+**Schedule:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 0) starts it, confirms it and runs the first loop. The schedule fires the rest, including outside regular hours and after an error, until the run ends (section 5).
+- **Start it:** ask the scheduler for a job every 4 minutes with that prompt. In Claude Code: the `loop` skill through the Skill tool, with `args: "4m Run ONE IRRM loop"` (the slash command `/loop 4m Run ONE IRRM loop`).
+- **Confirm it:** list the session's scheduled jobs and keep those whose prompt contains `Run ONE IRRM loop`. Each has an id, a schedule and, if the scheduler shows it, a next run time. In Claude Code: `CronList`.
+- **Delete it:** remove a job by its id. In Claude Code: `CronDelete`.
 
 Each loop has two steps. The second starts only after the first finishes.
 1. The main thread (the scheduled session) gets the current Pacific time.

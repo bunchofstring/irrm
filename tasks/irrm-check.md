@@ -9,7 +9,7 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
 1. **Start the keep-alive** (section 6).
-2. **Start the loop** (section 5). Run its first iteration immediately after it starts. Do not wait for the loop to fire it.
+2. **Start the loop** (section 5).
 3. **Confirm the loop.** Expect exactly one loop job.
    - If there is none, start the loop once more and confirm again. Do not run another first iteration.
    - If there is still none, post an error line that says the loop could not be started, and end the run (section 6).

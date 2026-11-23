@@ -31,3 +31,15 @@ Wilder's RSI of closes:
 The simple average of the true range of the last 14 completed bars.
 
 True range = max(high − low, |high − previous close|, |low − previous close|).
+
+## Daily indicators (draft)
+
+These are proposed for the draft rule sets `weak-close-swing` and `gap-fill-overshoot`. They need a human maintainer's approval before any live strategy uses them.
+
+They use split-adjusted **official daily closes** from earlier sessions, plus today's data. P is the latest completed 1-minute regular-hours close. "Now" means today's close is replaced by P.
+
+- **Opening gap** = (open of today's first regular-hours 1-minute bar) ÷ (previous session's official close) − 1.
+- **20-session return** = (previous session's official close) ÷ (official close 21 sessions ago) − 1. It uses only closes known before today's open.
+- **RSI2 now:** Wilder's RSI with n = 2, on official daily closes. Seed it over at least 250 sessions of history, then take one more Wilder step with P as today's close.
+- **IBS now** (internal bar strength) = (P − today's low) ÷ (today's high − today's low). The high and low come from today's completed 1-minute bars. If high = low, IBS now = 0.5.
+- **SMA3 now** = (the last 2 official daily closes + P) ÷ 3.

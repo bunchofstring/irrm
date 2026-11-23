@@ -35,4 +35,11 @@ On QQQ, this rule set runs beside a QQQ buy-and-hold strategy, which is its benc
 - **Keep** it if its return is within 2 percentage points of QQQ buy-and-hold over the same period AND its largest drawdown is smaller.
 - **Otherwise remove** it from `strategy/ACTIVE.md`.
 
-Backtest evidence (2024-11-25 to 2026-11-12, 21 out-of-sample months): +35.2% against +35.4% for QQQ buy-and-hold; 13 of 21 months positive; 473 trades with a mean of +0.097% per trade (t = 1.81). It did not beat buy-and-hold, so the trial tests whether it matches buy-and-hold while holding only overnight and early morning.
+Backtest evidence (`irrm-backtest` conventions v1, 2024-11-25 to 2026-11-12, 493 sessions, cost 1 bp per side, `irrm-paper-trading` bookkeeping that keeps uninvested cash):
+- **Return:** +34.26% against +36.29% for QQQ buy-and-hold. Before costs it led, +48.01% against +36.31%. It trades twice a day, so it falls behind buy-and-hold above 0.85 bp per side.
+- **Largest drawdown:** −23.5% against −22.8%. **Sharpe:** 0.69 against 0.63.
+- **Trades:** 487 closed and 1 open, mean +0.067% per trade (t = 1.27, not statistically meaningful).
+- **Most recent 30%** (2026-04-15 to 2026-11-12): +12.13% against +9.71%, drawdown −7.4% against −14.8%.
+- **Keep bar:** met in 79 of 368 six-month windows (21%).
+
+The rule set was found by searching this same period, so none of the evidence is out-of-sample. It did not beat buy-and-hold after costs. The trial tests whether it can match buy-and-hold while holding only overnight and early morning.

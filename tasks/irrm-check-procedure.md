@@ -56,11 +56,12 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
    - the current quote: bid, ask, last price and timestamps
    - 5-minute regular-hours bars (open, high, low, close), with enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed)
    - while any strategy on that symbol holds a position: 1-minute regular-hours bars since that position's `stop_order.modified_at`
+   - if any active rule set on that symbol uses the daily indicators in `irrm-indicators`: split-adjusted daily bars (official closes) for at least the last 260 completed sessions, and today's 1-minute regular-hours bars so far (for today's open, high and low)
 
    If no tool can supply this data, or it is missing, stale or contradictory, apply guardrail 6.
 3. **Market holiday.** If it is 6:45am or later and no active symbol's quote has a trade timestamp from today: log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field, write it, and return that line with END RUN.
 4. **Missed checks.** If more than 6 minutes have passed since the previous check (`bot/check` `updated_at`), log "MISSED CHECKS from HH:MM to HH:MM PT" in every active strategy's log field. Resting stop orders still fill at the right prices for that gap.
-5. **Compute indicators.** Do this per active symbol, from completed 5-minute bars, as `irrm-indicators` describes. Every strategy on a symbol uses the same values.
+5. **Compute indicators.** Do this per active symbol, from completed 5-minute bars (and the daily bars, where a rule set uses the daily indicators), as `irrm-indicators` describes. Every strategy on a symbol uses the same values.
 6. **Run each active strategy** under its rule set, independently, in this order:
    1. Sell any position held overnight because end-of-day liquidation was missed.
    2. Run the resting stop fill test.

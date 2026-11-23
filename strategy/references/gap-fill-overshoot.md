@@ -1,8 +1,8 @@
-# "Gap-fill overshoot" (draft, not live)
+# "Gap-fill overshoot" (paper trial)
 
 Overnight-gap mean reversion, traded intraday. When AMZN opens at least 0.5% below the previous close, and has not already run up more than 5% over the past 20 sessions, it buys just after the open. It sells when the price has recovered 125% of the gap, or at its stop, or at the end of the day. One position at a time. Never add to an open position.
 
-It uses the daily indicators in the "Daily indicators (draft)" section of `irrm-indicators`: the opening gap and the 20-session return.
+It uses the daily indicators in the "Daily indicators" section of `irrm-indicators`: the opening gap and the 20-session return.
 
 ## Extra state fields
 - `last_entry_date`: the Pacific trading date of the last buy. Default null.
@@ -54,7 +54,7 @@ Generation 5's B5a, with a stop of 1.5 × gap_abs, ranked slightly higher in-sam
 
 Fewer than 100 trades and a range under 2 years make this weak evidence. Trying 87 variants also inflates the best results. A rule-free gap-fill baseline (gap ≥ 0.75%, full-fill target, generation 1) returned +6.12% over the same out-of-sample months. The refinements improved the in-sample results but not the out-of-sample results.
 
-## Paper trial (proposed)
+## Paper trial
 Run it on AMZN beside the AMZN buy-and-hold strategy for 6 months. A human maintainer then reviews it:
 - **Keep** it if its return is positive and its largest drawdown is under 10%.
 - **Otherwise remove** it from `strategy/ACTIVE.md`.

@@ -1,8 +1,8 @@
-# "Weak-close swing" (draft, not live)
+# "Weak-close swing" (paper trial)
 
 Daily mean reversion. Buys AMZN late in a session that is closing weak, holds overnight, and sells when the price climbs back above its 3-day average or after 3 sessions. One position at a time. Never add to an open position.
 
-It uses the daily indicators in the "Daily indicators (draft)" section of `irrm-indicators`: RSI2 now, IBS now and SMA3 now.
+It uses the daily indicators in the "Daily indicators" section of `irrm-indicators`: RSI2 now, IBS now and SMA3 now.
 
 ## Extra state fields
 - `last_entry_date`: the Pacific trading date of the last buy. Default null.
@@ -53,7 +53,7 @@ AMZN, 2024-11-26 to 2026-11-20 (498 sessions, just under 2 years), $5.00 start, 
 
 Fewer than 100 trades and a range under 2 years make this weak evidence. Trying 87 variants also inflates the best results.
 
-## Paper trial (proposed)
+## Paper trial
 Run it on AMZN beside the AMZN buy-and-hold strategy for 6 months. A human maintainer then reviews it:
 - **Keep** it if its return is positive and its largest drawdown is under 10%.
 - **Otherwise remove** it from `strategy/ACTIVE.md`.

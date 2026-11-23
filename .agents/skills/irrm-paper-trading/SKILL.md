@@ -25,7 +25,7 @@ Every exit uses this bookkeeping, whatever the reason: stop, take-profit or end-
 
 - proceeds = shares × fill price
 - pnl = proceeds − cost_basis
-- balance = proceeds
+- balance += pnl. This keeps balance = principal + realized_pnl. The cash a buy left uninvested stays in the balance: the remainder from rounding shares down, and anything above the $100.00 cap.
 - realized_pnl += pnl
 - position = null
 - last_sell_time = exit time

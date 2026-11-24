@@ -1,6 +1,6 @@
 ---
 name: irrm-indicators
-description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14 and ATR14 from 5-minute bars, plus the daily indicators (opening gap, 20-session return, RSI2, IBS, SMA3) that some rule sets use. Use whenever an IRRM check, backtest or analysis needs indicator values.
+description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14 and ATR14 from 5-minute bars, and the daily indicators (opening gap, 20-session return, RSI2, IBS, SMA3) from daily closes. Use whenever an IRRM check, backtest or analysis needs indicator values.
 ---
 
 # IRRM indicators
@@ -33,8 +33,6 @@ The simple average of the true range of the last 14 completed bars.
 True range = max(high − low, |high − previous close|, |low − previous close|).
 
 ## Daily indicators
-
-Only rule sets that name these use them, for example `weak-close-swing` and `gap-fill-overshoot`.
 
 They use split-adjusted **official daily closes** from earlier sessions, plus today's data. P is the latest completed 1-minute regular-hours close. "Now" means today's close is replaced by P.
 

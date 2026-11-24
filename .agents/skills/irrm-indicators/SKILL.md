@@ -1,6 +1,6 @@
 ---
 name: irrm-indicators
-description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14 and ATR14 from 5-minute bars. Use whenever an IRRM check, backtest or analysis needs indicator values.
+description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14 and ATR14 from 5-minute bars, and the daily indicators (opening gap, 20-session return, RSI2, IBS, SMA3) from daily closes. Use whenever an IRRM check, backtest or analysis needs indicator values.
 ---
 
 # IRRM indicators
@@ -31,3 +31,13 @@ Wilder's RSI of closes:
 The simple average of the true range of the last 14 completed bars.
 
 True range = max(high − low, |high − previous close|, |low − previous close|).
+
+## Daily indicators
+
+They use split-adjusted **official daily closes** from earlier sessions, plus today's data. P is the latest completed 1-minute regular-hours close. "Now" means today's close is replaced by P.
+
+- **Opening gap** = (open of today's first regular-hours 1-minute bar) ÷ (previous session's official close) − 1.
+- **20-session return** = (previous session's official close) ÷ (official close 21 sessions ago) − 1. It uses only closes known before today's open.
+- **RSI2 now:** Wilder's RSI with n = 2, on official daily closes. Seed it over at least 250 sessions of history, then take one more Wilder step with P as today's close.
+- **IBS now** (internal bar strength) = (P − today's low) ÷ (today's high − today's low). The high and low come from today's completed 1-minute bars. If high = low, IBS now = 0.5.
+- **SMA3 now** = (the last 2 official daily closes + P) ÷ 3.

@@ -10,6 +10,8 @@ This is the only place that names the live strategies and their symbols. Every o
 | bnh | AMZN buy & hold | AMZN | buy-and-hold | bot/state_bnh | lines_bnh |
 | qon | QQQ overnight hold | QQQ | overnight-hold | bot/state_qon | lines_qon |
 | qbnh | QQQ buy & hold | QQQ | buy-and-hold | bot/state_qbnh | lines_qbnh |
+| wcs | AMZN weak-close swing | AMZN | weak-close-swing | bot/state_wcs | lines_wcs |
+| gfo | AMZN gap-fill overshoot | AMZN | gap-fill-overshoot | bot/state_gfo | lines_gfo |
 
 ## Columns
 

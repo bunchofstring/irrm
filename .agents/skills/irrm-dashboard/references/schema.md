@@ -2,7 +2,7 @@
 
 This schema does not name any particular strategy or symbol. "Each active strategy" means each row of the active strategies list. That row gives the strategy's id, symbol, rule set, state doc and log field.
 
-Every time field and every time in a doc id is UTC, as `CONFIG.md` (Time keeping) requires. "ISO" below means ISO 8601 UTC with a `Z`. Docs written before that rule may carry another offset, so compare times as instants.
+Everything here is UTC, as `CONFIG.md` (Time keeping) requires: time fields, dates, doc ids and log lines. "ISO" below means ISO 8601 UTC with a `Z`. Docs written before that rule may carry another offset, so compare times as instants.
 
 ## Versioning
 
@@ -15,7 +15,7 @@ Every time field and every time in a doc id is UTC, as `CONFIG.md` (Time keeping
 ### Doc "check": bot-wide fields
 - `updated_at`: ISO UTC time of the last completed check. Used to detect missed checks.
 - `consecutive_errors`: the number of data errors in a row. Reset to 0 after a good check.
-- `display_time_zone`: the display time zone setting the last check ran with, as an IANA name. The dashboard page shows times in it.
+- `display_time_zone`: the display time zone setting the last check ran with, as an IANA name. Only the dashboard page uses it, to render times.
 
 If the doc is missing, create it with `updated_at` null, `consecutive_errors` 0 and the current display time zone. While `updated_at` is null, there are no missed checks to log.
 
@@ -80,8 +80,8 @@ Update:
 
 ## Collection "days": today's log
 
-- **Doc id:** the session date, YYYY-MM-DD (`CONFIG.md`, Time keeping).
-- **Fields:** `{date, summary: "", <log field>: [lines…] for each active strategy}`. The log lines and the summary are text for people, so their times are in the display time zone.
+- **Doc id:** the session's UTC date, YYYY-MM-DD.
+- **Fields:** `{date, summary: "", <log field>: [lines…] for each active strategy}`. Log lines are in UTC. The summary is rendered for a person, so its times are in the display time zone.
 - Create it at the first check of the day. If it already exists without an active strategy's log field, add that field as an empty array.
 
 ## Collection "trades": one doc per paper trade

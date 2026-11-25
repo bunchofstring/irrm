@@ -32,7 +32,7 @@ Open an interactive session in this repository and ask: *"Set up the IRRM dashbo
 Create a scheduled task with:
 - **Repository:** this repo.
 - **Connectors:** the ones from step 1.
-- **Schedule:** shortly before the operating hours begin, on each day they include. The task then runs a loop at the loop interval, performs a check in each loop within the operating hours, posts the summary after the close, and ends itself.
+- **Schedule:** shortly before the operating hours begin, on each day they include. With the default, that's before the earlier of the two UTC opening times in `CONFIG.md`. The task then runs a loop at the loop interval, performs a check in each loop within the operating hours, posts the summary after the close, and ends itself.
 - **Model:** a smaller, cheaper model is enough. The task only runs the loops; every check runs in a sub-agent, on the model the `Sub-agent` setting names.
 - **Prompt:** the template in `CONFIG.md`, with `<TBD>` replaced by the dashboard URL from step 2.
 

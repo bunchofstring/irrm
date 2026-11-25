@@ -7,9 +7,9 @@ This is the only file that defines IRRM's settings and their defaults. The sched
 | Key | Required | Default | Value and notes |
 |---|---|---|---|
 | `Dashboard artifact` | yes | none | The dashboard artifact's URL. Without it the run trades nothing and shows the setup steps (`tasks/irrm-check.md`, section 2). To create a dashboard, see `.agents/skills/irrm-dashboard/references/setup.md`. |
-| `Display time zone` | no | `America/Los_Angeles` (PT) | An IANA time zone name, for example `America/New_York`. Text and charts show every date and time in this zone (see Time keeping). |
+| `Display time zone` | no | `America/Los_Angeles` | An IANA time zone name, for example `Europe/London`. It changes only how times are rendered for a person (see Time keeping). Nothing IRRM stores or decides uses it. |
 | `Loop interval` | no | `4m` | Whole minutes between loops, for example `5m`. Pick a value that divides 60, so loops stay evenly spaced. The default is about the shortest interval that works under current limitations. `5m` lets each check react to a 5-minute bar while it is fresh. A longer interval can miss a rule set's short time window, such as the entry window in `strategy/references/gap-fill-overshoot.md`. |
-| `Operating hours` | no | `09:30-16:00 America/New_York Mon-Fri` (the regular session) | `HH:MM-HH:MM <IANA zone> <days>`. The start is inclusive and the end exclusive. Give days as a range (`Mon-Fri`) or a list (`Mon,Wed,Fri`). `00:00-24:00 America/New_York Mon-Sun` keeps IRRM on all the time. Checks run only within these hours. Trades happen only in the regular session (see Time keeping), whatever these hours say. Schedule the task to start shortly before these hours begin each day. |
+| `Operating hours` | no | `session` | `session` follows the regular session (see Time keeping). Otherwise `HH:MM-HH:MM <days>` in UTC; the start is inclusive and the end exclusive. Give days as a range (`Mon-Fri`) or a list (`Mon,Wed,Fri`). `00:00-24:00 Mon-Sun` keeps IRRM on all the time. Checks run only within these hours. Trades happen only in the regular session, whatever these hours say. Schedule the task to start shortly before these hours begin each day. |
 | `Sub-agent` | no | The harness's default. In Claude Code, that's the main thread's model and effort. | `<model> / <effort>`, for example `sonnet / medium`, or a comparable model from another provider. Either part may be left out. Every check and end-of-day step runs on it. Set it when the scheduled task itself runs on a small model. |
 | `External database` | no | None. The dashboard artifact's database holds both the page and IRRM's state. | **Not supported yet.** Planned: a database, such as a Google BigQuery project, that holds state for checks, backtests and paper trading. The dashboard may need extra steps to read from it. |
 | `Strategy definitions` | no | None. Only the rule sets in `strategy/references/`. | **Not supported yet.** Planned: artifacts the check can read, such as a document or a page with a data source, that add rule sets. |
@@ -42,9 +42,17 @@ In an interactive session, such as a backtest, an analysis or a dashboard setup,
 
 ## Time keeping
 
-- **Stored in UTC, without exception.** Every timestamp IRRM writes, in the dashboard database, CSV files or working files, is ISO 8601 UTC with a `Z`, for example `2026-11-25T14:30:00Z`. A doc id that carries a time uses the UTC time. Compare stored times as instants, not as text, because docs written before this rule may carry another offset.
-- **Shown in the display time zone.** Every date and time a person reads, in log lines, returned lines, summaries, chat and charts, is converted to the display time zone and labeled with its abbreviation, for example `08:37 PST`.
-- **Market rules in exchange time.** The regular session, and every time a rule set names, follow the exchange's clock, not the viewer's. They are stated in ET (`America/New_York`). Convert the UTC clock to ET to apply them.
-- **The regular session** is 9:30am–4:00pm ET, Monday to Friday, except market holidays. Half days close at 1:00pm ET. "The open" and "the close" mean these times.
-- **The session date** is the trading session's date, `YYYY-MM-DD`, on the exchange's calendar. During the regular session it is also the UTC date. Day doc ids and the CSV files' `date` column use it.
-- **The clock:** `date -u` in Bash. Convert with Python's `zoneinfo`.
+As far as IRRM is concerned, everything is UTC. The display time zone is the only exception, and it affects only what is rendered.
+
+- **UTC, without exception.** Every time in this repository, and every time IRRM stores, compares or decides on, is UTC: the dashboard database, log lines, CSV files, doc ids and working files. Timestamps are ISO 8601 with a `Z`, for example `2026-11-25T14:30:00Z`. Dates are UTC dates. Compare stored times as instants, not as text, because docs written before this rule may carry another offset.
+- **Rendering is the one exception.** When a date or time is shown to a person, convert it to the display time zone and label it with its abbreviation, for example `08:37 PST`. That covers chat messages (the loop's status, error and final messages, and a check's returned line), the end-of-day summary, and the dashboard page and its charts. Convert with Python's `zoneinfo` at that moment only.
+- **The regular session** is the US exchanges' regular trading hours, Monday to Friday, except market holidays:
+
+  | | Open | Close | Half-day close |
+  |---|---|---|---|
+  | While US daylight saving time is in effect | 13:30 | 20:00 | 17:00 |
+  | Otherwise | 14:30 | 21:00 | 18:00 |
+
+  US daylight saving time starts at 07:00 UTC on the second Sunday of March and ends at 06:00 UTC on the first Sunday of November. "The open" and "the close" mean the session's open and close. A session never crosses UTC midnight, so it has one UTC date.
+- **Rule times are offsets** from the open or the close, such as `open + 4m` or `close − 10m`. That keeps every rule right across daylight saving changes without naming a time zone.
+- **The clock:** `date -u` in Bash.

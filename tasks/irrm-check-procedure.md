@@ -43,7 +43,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 4. One check
 
-**Time keeping** follows `CONFIG.md`: store every timestamp in UTC, show every time in the display time zone, and apply the regular session and every rule set's times in ET. Checks from 3:50pm ET onward are end-of-day checks.
+**Time keeping** follows `CONFIG.md`: everything is UTC, including the log lines. Only the returned line is rendered in the display time zone. Checks from `close − 10m` onward are end-of-day checks.
 
 **Keep data out of your context.** Each model call re-reads everything in the conversation, so work on files, not on text in the conversation:
 - Read dashboard docs to JSON files (in Claude Code, ArtifactData's `out_dir`).
@@ -60,16 +60,16 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
    - if any active rule set on that symbol uses the daily indicators in `irrm-indicators`: split-adjusted daily bars (official closes) for at least the last 260 completed sessions, and today's 1-minute regular-hours bars so far (for today's open, high and low)
 
    If no tool can supply this data, or it is missing, stale or contradictory, apply guardrail 6.
-4. **Market holiday.** If it is 9:45am ET or later and no active symbol's quote has a trade timestamp from today's session date: log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field, write it, and return that line with END RUN.
-5. **Missed checks.** If the previous check (`bot/check` `updated_at`) was in today's session and more than the loop interval plus 2 minutes ago, log "MISSED CHECKS from HH:MM to HH:MM TZ", in the display time zone, in every active strategy's log field. Resting stop orders still fill at the right prices for that gap.
+4. **Market holiday.** If it is `open + 15m` or later and no active symbol's quote has a trade timestamp from today (UTC): log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field, write it, and return that line with END RUN.
+5. **Missed checks.** If the previous check (`bot/check` `updated_at`) was in today's session and more than the loop interval plus 2 minutes ago, log "MISSED CHECKS from HH:MM to HH:MM UTC" in every active strategy's log field. Resting stop orders still fill at the right prices for that gap.
 6. **Compute indicators.** Do this per active symbol, from completed 5-minute bars (and the daily bars, where a rule set uses the daily indicators), as `irrm-indicators` describes. Every strategy on a symbol uses the same values.
 7. **Run each active strategy** under its rule set, independently, in this order:
    1. Sell any position held overnight because end-of-day liquidation was missed.
    2. Run the resting stop fill test.
    3. Apply any other exit in the rule set's SELL rule.
-   4. From 3:50pm ET, apply end-of-day liquidation if the rule set uses it.
+   4. From `close − 10m`, apply end-of-day liquidation if the rule set uses it.
    5. Recompute stop levels and raise the stop order's trigger.
-   6. Apply the BUY rule. No new positions from 3:50pm ET onward.
+   6. Apply the BUY rule. No new positions from `close − 10m` onward.
 
    `irrm-paper-trading` has the fill, stop and liquidation mechanics.
 8. **Log.** Append one line per active strategy to its log field. The format is in the next section.
@@ -80,9 +80,8 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 Log every check, one line per active strategy, including when it takes no action:
 
-`[HH:MM TZ] SYMBOL bid/ask $x.xx/$x.xx | MACD 0.0000 / Sig 0.0000 / Hist ±0.0000 | Pos: none OR n sh @ $cost, peak $p, stop $s (reason) | Bal $x.xx (P&L ±$x.xx) | ACTION: BUY / SELL / NO ACTION — one-sentence reason`
+`[HH:MM UTC] SYMBOL bid/ask $x.xx/$x.xx | MACD 0.0000 / Sig 0.0000 / Hist ±0.0000 | Pos: none OR n sh @ $cost, peak $p, stop $s (reason) | Bal $x.xx (P&L ±$x.xx) | ACTION: BUY / SELL / NO ACTION — one-sentence reason`
 
-- `HH:MM TZ` is the check's time in the display time zone, with its abbreviation.
 - A rule set may add fields to this line. Its file says where.
 - On a BUY or SELL, append a second line to that strategy's log field. It explains which signal or stop triggered, and gives the trade's P&L.
 
@@ -94,7 +93,7 @@ Log every check, one line per active strategy, including when it takes no action
 
 ## 7. End of day
 
-The end-of-day step runs once per session date, after the close, or at the end of the operating hours if they end before the close. If today's day doc already has a `summary`, return it and do nothing else. Otherwise:
+The end-of-day step runs once per session, after the close, or at the end of the operating hours if they end before the close. If today's day doc already has a `summary`, return it and do nothing else. Otherwise:
 1. Update the dashboard's CSV files, the only time in the day this happens, with open positions marked at the close (or at the latest price, before the close), as `irrm-dashboard` describes.
 2. Write the summary described in `irrm-summary` into today's day doc `summary` field.
 3. Return the summary. The loop makes it the final message and ends the run.

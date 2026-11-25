@@ -5,7 +5,7 @@ Overnight-gap mean reversion, traded intraday. When AMZN opens at least 0.5% bel
 It uses the daily indicators in the "Daily indicators" section of `irrm-indicators`: the opening gap and the 20-session return.
 
 ## Extra state fields
-- `last_entry_date`: the session date of the last buy. Default null.
+- `last_entry_date`: the UTC date of the last buy. Default null.
 
 ## Extra position fields
 - `gap_abs`: the previous official close minus today's open, in dollars (positive).
@@ -15,7 +15,7 @@ It uses the daily indicators in the "Daily indicators" section of `irrm-indicato
 
 ## BUY rule
 1. Only when the strategy has no open position.
-2. Only at the first check at or after 09:34 ET, and before 09:38 ET. That is one chance per session.
+2. Only at the first check at or after `open + 4m`, and before `open + 8m`. That is one chance per session.
 3. Only if last_entry_date is not today.
 4. BUY when both are true:
    - the opening gap ≤ −0.50%

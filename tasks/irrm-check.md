@@ -44,9 +44,9 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 4. When a check is warranted
 
-A **check** is the trading work: one pass over every active strategy. Compare the clock with the operating hours in their own time zone, and with the close (`CONFIG.md`, Time keeping) in ET.
+A **check** is the trading work: one pass over every active strategy. Compare the UTC clock with the operating hours and with the close (`CONFIG.md`, Time keeping).
 - **A check is warranted** in a loop within the operating hours, if a dashboard artifact is set and every required dependency in section 3 is available. The check itself decides whether the market is open.
-- **The end-of-day step is warranted** once per session date, in the first loop at or after the close, or at or after the end of the operating hours if they end before the close. It needs a session that had regular hours and a dashboard artifact.
+- **The end-of-day step is warranted** once per session, in the first loop at or after the close, or at or after the end of the operating hours if they end before the close. It needs a session that had regular hours and a dashboard artifact.
 
 ## 5. One loop
 
@@ -78,4 +78,4 @@ Every line the main thread writes is re-read at each later loop, so it displays 
 - **to report an error:** a loop that could not be started, a missing dashboard artifact or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
 - **in the final message,** which names any missing dependency, including any a check reported.
 
-Show every time in the display time zone. A loop that goes as planned ends its turn with no text at all: no status line, no summary of the check, no note about the keep-alive.
+Render every time in these lines in the display time zone. A loop that goes as planned ends its turn with no text at all: no status line, no summary of the check, no note about the keep-alive.

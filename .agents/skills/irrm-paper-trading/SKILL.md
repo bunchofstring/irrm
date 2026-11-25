@@ -35,4 +35,4 @@ Record a trade doc for every buy and sell.
 ## Read only when needed
 
 - **`references/stop-orders.md`:** the resting stop-loss order, the fill test and the GAP rule. Read it whenever a strategy holds a position or buys.
-- **`references/end-of-day.md`:** end-of-day liquidation, including the case where it was missed. Read it at any check from 3:50pm ET, and at the first check of a day when a position is still open from the day before.
+- **`references/end-of-day.md`:** end-of-day liquidation, including the case where it was missed. Read it at any check from `close − 10m`, and at the first check of a day when a position is still open from the day before.

@@ -4,16 +4,16 @@ These follow common institutional backtesting practice and the GIPS valuation an
 
 ## Data
 
-- `minute_bars`: 1-minute regular-hours bars. `ts` is the bar's **start** time in UTC, so the bar that starts at 15:40 ET covers 15:40:00–15:41:00. Its open is the first price after 15:40:00, and it is completed at 15:41. Convert to ET (`America/New_York`) to apply rule-set times, as `CONFIG.md` (Time keeping) describes. Keep stored times in UTC, and show times in the report in the display time zone.
+- `minute_bars`: 1-minute regular-hours bars. `ts` is the bar's **start** time in UTC, so the bar stamped 19:40:00Z covers 19:40:00–19:41:00Z. Its open is the first price after 19:40:00Z, and it is completed at 19:41:00Z. Work in UTC throughout, as `CONFIG.md` (Time keeping) describes. Rule sets give times as offsets from each session's open or close. Render times in the report in the display time zone.
 - `daily_bars`: daily regular-hours bars, split-adjusted. `close` is the official close.
 - `earnings_dates`: earnings report dates.
 
 Get dividends (ex-date and amount) and the 3-month Treasury bill yield from a read-only market-data tool, for example Alpha Vantage `DIVIDENDS` and `TREASURY_YIELD` (maturity 3month).
 
-Build 5-minute bars from the 1-minute bars when needed. Check coverage first: each full day has 390 1-minute bars and each half day has 211 (last bar 12:59 ET). Treat a day with any other count as a data gap and report it. Never fill a gap with data from outside the bar's time.
+Build 5-minute bars from the 1-minute bars when needed. Check coverage first: each full day has 390 1-minute bars and each half day has 210 (the last starts one minute before the close). Treat a day with any other count as a data gap and report it. Never fill a gap with data from outside the bar's time.
 
 ## Check grid
-- Checks run at ET clock times from the 9:30 open, one loop interval apart, plus the start time of every time window a rule set names (for example 12:00, 15:40, 15:50). The loop interval is its default in `CONFIG.md`, unless the human names another. The last check of a day is the last grid time before the close (16:00, or 13:00 on half days).
+- Checks run from each session's open (`CONFIG.md`, Time keeping), one loop interval apart, plus the start time of every time window a rule set names (for example `open + 2h30m`, `close − 20m`, `close − 10m`). The loop interval is its default in `CONFIG.md`, unless the human names another. The last check of a day is the last grid time before the close, including on half days.
 - A rule that fires "at the first check at or after T" fires at T. A rule limited to a window fires at the first check in that window.
 
 ## No look-ahead

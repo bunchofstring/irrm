@@ -5,10 +5,10 @@ These rules apply only to strategies whose rule set says that end-of-day liquida
 ## Liquidation
 
 - No such strategy holds a position overnight unless every end-of-day check was missed.
-- Every check from 3:50pm ET until the close is an end-of-day check. If the strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation".
+- Every check from `close − 10m` until the close is an end-of-day check. If the strategy has an open position, sell all of it at the current bid, with reason "EOD liquidation".
 - Use the paper SELL bookkeeping. The GAP rule does not apply.
 - Log the liquidation in the strategy's log field, with a second line giving the trade's P&L.
-- No such strategy opens a new position from 3:50pm ET onward.
+- No such strategy opens a new position from `close − 10m` onward.
 
 ## Missed liquidation
 

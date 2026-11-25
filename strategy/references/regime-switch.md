@@ -20,8 +20,8 @@ It uses only the buy and sell rules below. None of the original rule set's stop 
 
 ## BUY rule
 1. Only when the strategy has no open position.
-2. **TREND mode:** the latest completed bar has a bullish crossover AND the MACD line > 0, and that bar ended between 10:05 and 14:00 ET (inclusive).
-3. **BOUNCE mode:** RSI14 of the previous completed bar < 30 AND RSI14 of the latest completed bar ≥ 30, and that bar ended between 9:50 and 15:15 ET (inclusive).
+2. **TREND mode:** the latest completed bar has a bullish crossover AND the MACD line > 0, and that bar ended between `open + 35m` and `open + 4h30m` (inclusive).
+3. **BOUNCE mode:** RSI14 of the previous completed bar < 30 AND RSI14 of the latest completed bar ≥ 30, and that bar ended between `open + 20m` and `open + 5h45m` (inclusive).
 4. Never reuse a signal bar: skip if the bar's end time is the same instant as last_used_signal_bar.
 5. Make a paper BUY. Record mode and atr_at_entry, and set last_used_signal_bar.
 

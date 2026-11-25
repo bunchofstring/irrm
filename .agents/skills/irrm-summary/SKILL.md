@@ -5,7 +5,7 @@ description: How to write IRRM's end-of-day summary after the close, with a head
 
 # IRRM end-of-day summary
 
-Write the summary into today's day doc `summary` field, and make it your final message. Cover every active strategy. Give every date and time in the display time zone, with its abbreviation (`CONFIG.md`, Time keeping).
+Write the summary into today's day doc `summary` field, and make it your final message. Cover every active strategy. The summary is rendered for a person, so give every date and time in the display time zone, with its abbreviation (`CONFIG.md`, Time keeping).
 
 ## P&L chart
 

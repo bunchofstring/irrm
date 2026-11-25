@@ -6,7 +6,7 @@ Work unattended. When in doubt, take NO ACTION and log why. Do not sleep, start 
 
 ## 1. Inputs
 
-- **Settings:** the sub-agent's prompt gives every resolved setting as `Key: value` lines. `CONFIG.md` defines them. Use them as given: never re-read the scheduled task's prompt or apply defaults again. A check uses the dashboard artifact, the display time zone and the loop interval.
+- **Settings:** the sub-agent's prompt gives every resolved setting as `Key: value` lines. `CONFIG.md` defines them. Use them as given: never re-read the scheduled task's prompt or apply defaults again.
 - **Unwritten batch:** if the prompt gives `Unwritten batch: <folder>`, write that folder's JSON files before anything else (section 6).
 - **What to run:** ONE check (sections 4–6), or the end-of-day step (section 7).
 

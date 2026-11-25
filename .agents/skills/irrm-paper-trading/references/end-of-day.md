@@ -12,7 +12,7 @@ These rules apply only to strategies whose rule set says that end-of-day liquida
 
 ## Missed liquidation
 
-The market is closed after the close (`CONFIG.md`, Time keeping), so no sale can fill then.
+No sale can fill once the regular session has ended (`CONFIG.md`, Time keeping).
 
 If a position is still open after the close because every end-of-day check was missed:
 1. Leave it open overnight, and log "EOD liquidation missed — position held overnight" in the strategy's log field.

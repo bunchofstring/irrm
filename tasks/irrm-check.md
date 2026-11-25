@@ -9,8 +9,9 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
 1. **Start the keep-alive** (section 6).
-2. **Start the loop** (section 5).
-3. **Confirm the loop.** Expect exactly one loop job.
+2. **Start the loop** on the open-aligned cron (section 5), then run its first iteration immediately.
+3. **Confirm the loop.** Expect exactly one loop job, whose cron is the open-aligned one.
+   - If its cron is different (for example `*/4`), delete it and start it once more on the open-aligned cron.
    - If there is none, start the loop once more and confirm again.
    - If there is still none, post an error line that says the loop could not be started, and end the run (section 6).
    - If there is more than one, delete the newer duplicates and keep the oldest.
@@ -33,7 +34,7 @@ Before the first loop, confirm that each dependency below is available. The chec
 | Need | Required | Suggested connector or tool |
 |---|---|---|
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` |
-| Recurring loop that can be started, listed and deleted | yes | In Claude Code, the `loop` skill, `CronList` and `CronDelete` (section 5) |
+| Recurring loop that can be started on a given cron, listed and deleted | yes | In Claude Code, `CronCreate`, `CronList` and `CronDelete` (section 5) |
 | Keep-alive between loops | yes | A background command (section 6) |
 | Sub-agents | no | In Claude Code, the Agent tool. Without it, the session opens `tasks/irrm-check-procedure.md` and performs each warranted check itself. |
 
@@ -47,7 +48,14 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 5. One loop
 
-**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`. Setup (section 1) starts it, runs its first iteration immediately and confirms it. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6). In Claude Code, start it with the `loop` skill through the Skill tool, with `args: "4m Run ONE IRRM loop"` (the slash command `/loop 4m Run ONE IRRM loop`).
+**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`, on minutes chosen so that one loop fires exactly at the 6:30am open. Setup (section 1) starts it, runs its first iteration immediately and confirms it. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6).
+
+**Align it with the open.** The scheduled task may fire any time before the open. Whenever it fires, the loop's minutes are offset from the top of the hour so that 6:30 is one of them:
+- **Offset** = the open's minute modulo the interval: 30 mod 4 = **2**. It is always less than the interval, so loops still fire every 4 minutes leading up to the open, and the first loop at or after the open is at 6:30 exactly.
+- **Cron:** `2-59/4 * * * *`, which fires at minutes 2, 6, …, 26, **30**, 34, …, 58 of every hour. Only the minute field is set, so it is right in any clock time zone whose offset from Pacific is whole hours, including the container's UTC.
+- Do not use `*/4` (the `loop` skill's `4m`): its minutes 28 and 32 straddle the open, so the 6:28 loop is too early for a check and the first check waits until 6:32.
+
+In Claude Code, start it with `CronCreate`, `cron: "2-59/4 * * * *"`, `recurring: true` and `prompt: "Run ONE IRRM loop"`, then run the first iteration yourself.
 - **Confirm it:** list the session's recurring jobs and keep those whose prompt contains `Run ONE IRRM loop`.
 - **Delete it as needed:** remove a job by its id. In Claude Code: `CronDelete`.
 

@@ -43,7 +43,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 4. One check
 
-**Time keeping** follows `CONFIG.md`: everything is UTC, including the log lines. Only the returned line is rendered in the display time zone. Checks from `close − 10m` onward are end-of-day checks.
+**Time keeping and operating hours** follow `CONFIG.md`: everything is UTC, including the log lines. Only the returned line is rendered in the display time zone. Checks from `close − 10m` onward are end-of-day checks.
 
 **Keep data out of your context.** Each model call re-reads everything in the conversation, so work on files, not on text in the conversation:
 - Read dashboard docs to JSON files (in Claude Code, ArtifactData's `out_dir`).

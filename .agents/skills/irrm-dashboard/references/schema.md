@@ -17,7 +17,7 @@ Everything here is UTC, as `CONFIG.md` (Time keeping) requires: time fields, dat
 - `consecutive_errors`: the number of data errors in a row. Reset to 0 after a good check.
 - `display_time_zone`: the display time zone setting the last check ran with, as an IANA name. Only the dashboard page uses it, to render times.
 
-If the doc is missing, create it with `updated_at` null, `consecutive_errors` 0 and the current display time zone. While `updated_at` is null, there are no missed checks to log.
+If the doc is missing, create it with `updated_at` null and `consecutive_errors` 0. While `updated_at` is null, there are no missed checks to log.
 
 ### One state doc per active strategy (named in its row)
 

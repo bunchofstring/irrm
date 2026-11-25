@@ -31,8 +31,8 @@ Confirm that each dependency is available. If a required one is missing, take no
 |---|---|---|---|
 | Active strategies and symbols | yes | `strategy/ACTIVE.md` | — |
 | Market data: quotes and 1- and 5-minute bars for each active symbol | yes | Any read-only market-data connector, for example Massive or Robinhood (read tools only) | — |
-| Dashboard database | yes | The ArtifactData tool, plus the dashboard artifact setting | `.agents/skills/irrm-dashboard/` |
-| Clock | yes | As `CONFIG.md` (Time keeping) describes | — |
+| Dashboard database | yes | The ArtifactData tool, plus the dashboard URL from the prompt | `.agents/skills/irrm-dashboard/` |
+| Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` | — |
 | Indicator math | yes | Python, run through Bash | `.agents/skills/irrm-indicators/` |
 | Strategy rules | yes | The rule set file named in each row of `strategy/ACTIVE.md` | — |
 | Paper fills, stops and liquidation | yes | — | `.agents/skills/irrm-paper-trading/` |

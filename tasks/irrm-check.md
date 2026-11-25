@@ -41,7 +41,7 @@ Before the first loop, confirm that each dependency below is available. The chec
 | Need | Required | Suggested connector or tool |
 |---|---|---|
 | Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` |
-| Recurring loop that can be started on a given cron, listed and deleted | yes | In Claude Code, `CronCreate`, `CronList` and `CronDelete` (section 5) |
+| Recurring loop that can be started, listed and deleted | yes | In Claude Code, the `loop` skill, `CronList` and `CronDelete` (section 5) |
 | Keep-alive between loops | yes | A background command (section 6) |
 | Sub-agents | no | In Claude Code, the Agent tool. Without it, the session opens `tasks/irrm-check-procedure.md` and performs each warranted check itself. |
 

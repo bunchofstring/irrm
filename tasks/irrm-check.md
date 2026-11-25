@@ -9,14 +9,23 @@ This is the scheduled task: a loop that repeats every 4 minutes until the 1:00pm
 Do these steps in order at the start of every scheduled session. Do not skip one. Setup runs once per session: a loop iteration skips this section.
 
 1. **Start the keep-alive** (section 6).
-2. **Start the loop** on the open-aligned cron (section 5), then run its first iteration immediately.
-3. **Confirm the loop.** Expect exactly one loop job, whose cron is the open-aligned one.
+2. **Wait for the open, if it is early.** If it is a weekday before 6:29:58am Pacific, start the open timer (below), print `LOOP deferred — open timer until 06:29:58 PT` once, and end the turn. Do not start the loop yet. When the open timer ends, continue at step 3 if it is now 6:29:58 or later; otherwise start another open timer and end the turn again, with no text. At any other time, go straight to step 3.
+3. **Start the loop** on the open-aligned cron (section 5).
+   - If the open timer just ended, run the loop's first iteration *before* starting the loop: it is the check at the open (section 4). Then start the loop. Starting it first would also fire it at 6:30, for a second check right after the first.
+   - Otherwise, start the loop, then run its first iteration immediately.
+4. **Confirm the loop.** Expect exactly one loop job, whose cron is the open-aligned one.
    - If its cron is different (for example `*/4`), delete it and start it once more on the open-aligned cron.
    - If there is none, start the loop once more and confirm again.
    - If there is still none, post an error line that says the loop could not be started, and end the run (section 6).
    - If there is more than one, delete the newer duplicates and keep the oldest.
-4. **Print the loop status** once: `LOOP started — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
-5. **Let the loop fire the rest of the iterations.**
+5. **Print the loop status** once: `LOOP started — job <id>, cron <cron>, next run <time>`. Omit the next run if it is not known. Write no state for it.
+6. **Let the loop fire the rest of the iterations.**
+
+**Open timer:** a background command labeled "Open timer" that sleeps until 6:29:58am Pacific, at most 7080 seconds. When it ends, the session wakes and setup continues. It starts the first loop 2 seconds before the open, so that loop's check lands at the open. It runs alongside the keep-alive and is not a sleep in a loop. In Claude Code: Bash with `run_in_background: true`, `timeout: 7200000` and:
+
+```
+t=$(( $(TZ=America/Los_Angeles date -d '06:29:58' +%s) - $(date +%s) )); [ "$t" -gt 7080 ] && t=7080; sleep "$t"
+```
 
 ## 2. Inputs
 
@@ -43,19 +52,20 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 ## 4. When a check is warranted
 
 **Regular hours** are weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). A **check** is the trading work: one pass over every active strategy.
-- **A check is warranted** in a loop within regular hours, if the prompt gives a dashboard URL and every required dependency in section 3 is available.
+- **A check is warranted** in a loop within regular hours (the first iteration that the open timer starts counts as within them, even if the clock still reads 6:29:58 or 6:29:59), if the prompt gives a dashboard URL and every required dependency in section 3 is available.
 - **The end-of-day step is warranted** in the first loop at or after the 1:00pm close, if today had regular hours and the prompt gives a dashboard URL.
 
 ## 5. One loop
 
-**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`, on minutes chosen so that one loop fires exactly at the 6:30am open. Setup (section 1) starts it, runs its first iteration immediately and confirms it. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6).
+**Loop:** a recurring job, for this session only, that fires every 4 minutes with the prompt `Run ONE IRRM loop`, on minutes aligned with the 6:30am open. Setup (section 1) starts it, runs its first iteration and confirms it. The loop fires the rest, including outside regular hours and after an error, until the run ends (section 6).
 
-**Align it with the open.** The scheduled task may fire any time before the open. Whenever it fires, the loop's minutes are offset from the top of the hour so that 6:30 is one of them:
-- **Offset** = the open's minute modulo the interval: 30 mod 4 = **2**. It is always less than the interval, so loops still fire every 4 minutes leading up to the open, and the first loop at or after the open is at 6:30 exactly.
+**Align it with the open.** The loop's minutes are offset from the top of the hour so that 6:30 is one of them, and the loops after the open check run on a 4-minute grid counted from the open (6:34, 6:38, …):
+- **Offset** = the open's minute modulo the interval: 30 mod 4 = **2**. It is always less than the interval.
 - **Cron:** `2-59/4 * * * *`, which fires at minutes 2, 6, …, 26, **30**, 34, …, 58 of every hour. Only the minute field is set, so it is right in any clock time zone whose offset from Pacific is whole hours, including the container's UTC.
-- Do not use `*/4` (the `loop` skill's `4m`): its minutes 28 and 32 straddle the open, so the 6:28 loop is too early for a check and the first check waits until 6:32.
+- Do not use `*/4` (the `loop` skill's `4m`): its minutes 28 and 32 straddle the open, so the 6:28 loop is too early for a check and the first check waits until 6:32. The `loop` skill always counts from the top of the hour, not from when it is started, so starting it at the open does not help.
+- The scheduler may delay each firing of a recurring job by a fixed amount, up to half the interval, but never early. The check at the open does not depend on it: the open timer starts that one.
 
-In Claude Code, start it with `CronCreate`, `cron: "2-59/4 * * * *"`, `recurring: true` and `prompt: "Run ONE IRRM loop"`, then run the first iteration yourself.
+In Claude Code, start it with `CronCreate`, `cron: "2-59/4 * * * *"`, `recurring: true` and `prompt: "Run ONE IRRM loop"`, and run the first iteration yourself, before or after it as section 1, step 3 says.
 - **Confirm it:** list the session's recurring jobs and keep those whose prompt contains `Run ONE IRRM loop`.
 - **Delete it as needed:** remove a job by its id. In Claude Code: `CronDelete`.
 
@@ -73,13 +83,13 @@ For the end-of-day step, replace "ONE IRRM check" with "the IRRM end-of-day step
 
 ## 6. Keep-alive and ending the run
 
-- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the loop dies with it. So keep exactly one long background command running between loops, instead of a sleep in every loop. Start it in setup (section 1, step 1), and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
-- **The run ends** in the first loop at or after 1:00pm, on a day with no regular hours, or when a check returns END RUN (a market holiday, or 3 consecutive data errors). End it gracefully: delete the loop, stop the keep-alive (in Claude Code, TaskStop), and post the final message.
+- **Keep-alive:** if no turn and no background command is running, the cloud container can be shut down, and the loop dies with it. So keep exactly one keep-alive running between loops (before the open, the open timer may run beside it), instead of a sleep in every loop. Start it in setup (section 1, step 1), and start a new one only when the previous one ends (about 3 times a day): a background command labeled "Keep-alive" that sleeps for just under 2 hours. In Claude Code: Bash `sleep 7080` with `run_in_background: true` and `timeout: 7200000` (2 hours, the most a background command may run).
+- **The run ends** in the first loop at or after 1:00pm, on a day with no regular hours, or when a check returns END RUN (a market holiday, or 3 consecutive data errors). End it gracefully: delete the loop, stop the keep-alive and any open timer (in Claude Code, TaskStop), and post the final message.
 
 ## 7. Silence
 
 Every line the main thread writes is re-read at each later loop, so it displays text only:
-- **once at setup,** the loop status line (section 1, step 4).
+- **once at setup,** the deferral line, if setup waits for the open (section 1, step 2), and the loop status line (section 1, step 5).
 - **to report an error:** a loop that could not be started, a missing dashboard URL or dependency (and why), a sub-agent that fails, or a sub-agent line that reports an error or END RUN (post the reason).
 - **in the final message,** which names any missing dependency, including any a check reported.
 

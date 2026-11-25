@@ -94,7 +94,7 @@ Log every check, one line per active strategy, including when it takes no action
 ## 7. End of day
 
 The end-of-day step runs once per session, after the close, or at the end of the operating hours if they end before the close. If today's day doc already has a `summary`, return it and do nothing else. Otherwise:
-1. Update the dashboard's CSV files, the only time in the day this happens, with open positions marked at the close (or at the latest price, before the close), as `irrm-dashboard` describes.
+1. Update the dashboard's CSV files, the only time in the day this happens, with open positions marked at the close, or at the latest price if the step runs before the close, as `irrm-dashboard` describes.
 2. Write the summary described in `irrm-summary` into today's day doc `summary` field.
 3. Return the summary. The loop makes it the final message and ends the run.
 

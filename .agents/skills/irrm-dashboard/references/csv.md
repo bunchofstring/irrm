@@ -11,7 +11,7 @@ Each dataset doc holds the file's current location in `source.url` (`/_blob/<ass
 
 ## Columns
 
-Times follow `CONFIG.md` (Time keeping): `date` is the session's UTC date, and every timestamp is ISO 8601 UTC. Only the page converts them, to render them in the display time zone. Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl`. Open P&L is `(mark − cost_price) × shares` for a strategy's open position, and 0 with no position. Take `strategy_name` from the "name" column of the active strategies list.
+Times follow `CONFIG.md` (Time keeping): `date` is the session's UTC date, and every timestamp is ISO 8601 UTC. The page renders them in the display time zone. Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl`. Open P&L is `(mark − cost_price) × shares` for a strategy's open position, and 0 with no position. Take `strategy_name` from the "name" column of the active strategies list.
 
 `daily_pnl.csv`: `date,strategy,strategy_name,day_pnl,cum_pnl,trades,wins,losses,open_pnl,total_pnl`
 - `day_pnl`: the sum of that day's sell P&L

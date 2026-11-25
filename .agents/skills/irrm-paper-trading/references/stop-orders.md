@@ -7,7 +7,7 @@ The order is simulated: it exists only as `stop_order` in the position object. N
 ## At the BUY
 
 1. Compute the position's starting `stop_price` and `stop_reason` from the rule set's SELL rule, as if this were the first check.
-2. Record `stop_order = {type: "stop", trigger: stop_price, placed_at: entry_time, modified_at: entry_time}`.
+2. Record `stop_order = {type: "stop", trigger: stop_price, placed_at: entry_time, modified_at: entry_time}`. Both times are ISO UTC.
 
 ## Fill test
 
@@ -16,7 +16,7 @@ Run this first thing in every check, for each open position:
 1. Fetch 1-minute regular-hours bars from `stop_order.modified_at` up to now.
 2. The stop fills on the first bar whose low ≤ trigger.
    - Fill price = the trigger, or that bar's open if the bar opened below the trigger (the price gapped through the stop).
-   - Exit time = that bar's start time.
+   - Exit time = that bar's start time, in ISO UTC.
 3. If no bar shows a fill yet but the current bid ≤ trigger, it fills at the trigger now.
 
 ## Bookkeeping

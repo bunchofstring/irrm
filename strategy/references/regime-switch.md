@@ -5,12 +5,12 @@ Switches between a trend rule and an oversold-bounce rule. One position at a tim
 It uses only the buy and sell rules below. None of the original rule set's stop levels apply to it: no breakeven, breakeven_plus, principal floor or 2% trailing stop.
 
 ## Extra state fields
-- `last_used_signal_bar`: the ISO end time of the signal bar last used to buy. Default null.
+- `last_used_signal_bar`: the end time (ISO UTC) of the signal bar last used to buy. Default null.
 
 ## Extra position fields
 - `mode`: "trend" or "bounce".
 - `atr_at_entry`: ATR14 of the signal bar.
-- `entry_bar_end`: the ISO end time of the signal bar.
+- `entry_bar_end`: the end time (ISO UTC) of the signal bar.
 - `stops`: `{initial, trailing, take_profit (null in trend mode)}`
 - `stop_reason`: "initial" or "trailing".
 
@@ -20,9 +20,9 @@ It uses only the buy and sell rules below. None of the original rule set's stop 
 
 ## BUY rule
 1. Only when the strategy has no open position.
-2. **TREND mode:** the latest completed bar has a bullish crossover AND the MACD line > 0, and that bar ended between 7:05 and 11:00 Pacific (inclusive).
-3. **BOUNCE mode:** RSI14 of the previous completed bar < 30 AND RSI14 of the latest completed bar ≥ 30, and that bar ended between 6:50 and 12:15 Pacific (inclusive).
-4. Never reuse a signal bar: skip if the bar's end time equals last_used_signal_bar.
+2. **TREND mode:** the latest completed bar has a bullish crossover AND the MACD line > 0, and that bar ended between 10:05 and 14:00 ET (inclusive).
+3. **BOUNCE mode:** RSI14 of the previous completed bar < 30 AND RSI14 of the latest completed bar ≥ 30, and that bar ended between 9:50 and 15:15 ET (inclusive).
+4. Never reuse a signal bar: skip if the bar's end time is the same instant as last_used_signal_bar.
 5. Make a paper BUY. Record mode and atr_at_entry, and set last_used_signal_bar.
 
 ## SELL rule

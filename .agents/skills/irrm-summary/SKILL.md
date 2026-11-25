@@ -1,16 +1,16 @@
 ---
 name: irrm-summary
-description: How to write IRRM's end-of-day summary after the 1:00pm Pacific close, with a head-to-head comparison of every active strategy and the cumulative P&L record. Use at the IRRM check's end-of-day step, or when a human asks for a summary of a trading day.
+description: How to write IRRM's end-of-day summary after the close, with a head-to-head comparison of every active strategy and the cumulative P&L record. Use at the IRRM check's end-of-day step, or when a human asks for a summary of a trading day.
 ---
 
 # IRRM end-of-day summary
 
-Write the summary into today's day doc `summary` field, and make it your final message. Cover every active strategy.
+Write the summary into today's day doc `summary` field, and make it your final message. Cover every active strategy. Give every date and time in the display time zone, with its abbreviation (`CONFIG.md`, Time keeping).
 
 ## P&L chart
 
 - Display an interactive P&L chart with a labeled line for each active strategy. The paper-trading record is cumulative up to the time of the report.
-- The chart can show these ranges: 1d, 1w, 1m, 1y, 5y and all.
+- The chart can show these ranges: 1d, 1w, 1m, 1y, 5y and all. Its time axis is in the display time zone.
 - Build it from the `trades` collection, so it includes every past session.
 - The latest chart must be visible in the dashboard artifact.
 

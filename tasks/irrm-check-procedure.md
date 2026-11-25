@@ -6,7 +6,7 @@ Work unattended. When in doubt, take NO ACTION and log why. Do not sleep, start 
 
 ## 1. Inputs
 
-- **Dashboard artifact URL:** given in the sub-agent's prompt as `Dashboard artifact: <url>`.
+- **Settings:** the sub-agent's prompt gives every resolved setting as `Key: value` lines. `CONFIG.md` defines them. Use them as given: never re-read the scheduled task's prompt or apply defaults again. A check uses the dashboard artifact, the display time zone and the loop interval.
 - **Unwritten batch:** if the prompt gives `Unwritten batch: <folder>`, write that folder's JSON files before anything else (section 6).
 - **What to run:** ONE check (sections 4–6), or the end-of-day step (section 7).
 
@@ -31,8 +31,8 @@ Confirm that each dependency is available. If a required one is missing, take no
 |---|---|---|---|
 | Active strategies and symbols | yes | `strategy/ACTIVE.md` | — |
 | Market data: quotes and 1- and 5-minute bars for each active symbol | yes | Any read-only market-data connector, for example Massive or Robinhood (read tools only) | — |
-| Dashboard database | yes | The ArtifactData tool, plus the dashboard URL from the prompt | `.agents/skills/irrm-dashboard/` |
-| Clock in Pacific time | yes | Bash: `TZ=America/Los_Angeles date` | — |
+| Dashboard database | yes | The ArtifactData tool, plus the dashboard artifact setting | `.agents/skills/irrm-dashboard/` |
+| Clock | yes | As `CONFIG.md` (Time keeping) describes | — |
 | Indicator math | yes | Python, run through Bash | `.agents/skills/irrm-indicators/` |
 | Strategy rules | yes | The rule set file named in each row of `strategy/ACTIVE.md` | — |
 | Paper fills, stops and liquidation | yes | — | `.agents/skills/irrm-paper-trading/` |
@@ -43,7 +43,7 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 
 ## 4. One check
 
-**Regular hours** are weekdays 6:30am–1:00pm Pacific (America/Los_Angeles). Checks from 12:50pm onward are end-of-day checks.
+**Time keeping** follows `CONFIG.md`: store every timestamp in UTC, show every time in the display time zone, and apply the regular session and every rule set's times in ET. Checks from 3:50pm ET onward are end-of-day checks.
 
 **Keep data out of your context.** Each model call re-reads everything in the conversation, so work on files, not on text in the conversation:
 - Read dashboard docs to JSON files (in Claude Code, ArtifactData's `out_dir`).
@@ -51,36 +51,38 @@ Load a tool's schema before calling it (in Claude Code, with ToolSearch).
 - Do the indicators, fills, log lines and the write batch in Python, on those files. Look at only the values a decision needs.
 - Send each doc of the write batch from a JSON file (ArtifactData's `file_path`), so you never retype the day doc's log.
 
-1. **Read state.** Read `bot/check`, each active strategy's state doc, and today's day doc to JSON files, as `irrm-dashboard` describes. Create any doc that is missing.
-2. **Fetch data once.** Do this per active symbol, from any read-only market-data tool:
+1. **Market closed.** If now is outside the regular session (a weekend, before the open, or at or after the close), take no action, write nothing, and return `<time> — market closed — CONTINUE`. The operating hours can be wider than the session.
+2. **Read state.** Read `bot/check`, each active strategy's state doc, and today's day doc to JSON files, as `irrm-dashboard` describes. Create any doc that is missing.
+3. **Fetch data once.** Do this per active symbol, from any read-only market-data tool:
    - the current quote: bid, ask, last price and timestamps
    - 5-minute regular-hours bars (open, high, low, close), with enough history for at least 400 completed bars (about 5 sessions; span previous sessions as needed)
    - while any strategy on that symbol holds a position: 1-minute regular-hours bars since that position's `stop_order.modified_at`
    - if any active rule set on that symbol uses the daily indicators in `irrm-indicators`: split-adjusted daily bars (official closes) for at least the last 260 completed sessions, and today's 1-minute regular-hours bars so far (for today's open, high and low)
 
    If no tool can supply this data, or it is missing, stale or contradictory, apply guardrail 6.
-3. **Market holiday.** If it is 6:45am or later and no active symbol's quote has a trade timestamp from today: log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field, write it, and return that line with END RUN.
-4. **Missed checks.** If more than 6 minutes have passed since the previous check (`bot/check` `updated_at`), log "MISSED CHECKS from HH:MM to HH:MM PT" in every active strategy's log field. Resting stop orders still fill at the right prices for that gap.
-5. **Compute indicators.** Do this per active symbol, from completed 5-minute bars (and the daily bars, where a rule set uses the daily indicators), as `irrm-indicators` describes. Every strategy on a symbol uses the same values.
-6. **Run each active strategy** under its rule set, independently, in this order:
+4. **Market holiday.** If it is 9:45am ET or later and no active symbol's quote has a trade timestamp from today's session date: log one line, "MARKET CLOSED (holiday) — no action", in every active strategy's log field, write it, and return that line with END RUN.
+5. **Missed checks.** If the previous check (`bot/check` `updated_at`) was in today's session and more than the loop interval plus 2 minutes ago, log "MISSED CHECKS from HH:MM to HH:MM TZ", in the display time zone, in every active strategy's log field. Resting stop orders still fill at the right prices for that gap.
+6. **Compute indicators.** Do this per active symbol, from completed 5-minute bars (and the daily bars, where a rule set uses the daily indicators), as `irrm-indicators` describes. Every strategy on a symbol uses the same values.
+7. **Run each active strategy** under its rule set, independently, in this order:
    1. Sell any position held overnight because end-of-day liquidation was missed.
    2. Run the resting stop fill test.
    3. Apply any other exit in the rule set's SELL rule.
-   4. From 12:50pm, apply end-of-day liquidation if the rule set uses it.
+   4. From 3:50pm ET, apply end-of-day liquidation if the rule set uses it.
    5. Recompute stop levels and raise the stop order's trigger.
-   6. Apply the BUY rule. No new positions from 12:50pm onward.
+   6. Apply the BUY rule. No new positions from 3:50pm ET onward.
 
    `irrm-paper-trading` has the fill, stop and liquidation mechanics.
-7. **Log.** Append one line per active strategy to its log field. The format is in the next section.
-8. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`), every state doc, the day doc's full updated log fields and any trade docs in ONE batch, built as JSON files and sent with `file_path`, as `irrm-dashboard` describes. Do not update the dashboard's CSV files: that happens only at the end-of-day step.
-9. **Return** ONE line: the check's time, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PT — no trades, no errors — CONTINUE`.
+8. **Log.** Append one line per active strategy to its log field. The format is in the next section.
+9. **Write.** Write `bot/check` (`updated_at`, `consecutive_errors`, `display_time_zone`), every state doc, the day doc's full updated log fields and any trade docs in ONE batch, built as JSON files and sent with `file_path`, as `irrm-dashboard` describes. Do not update the dashboard's CSV files: that happens only at the end-of-day step.
+10. **Return** ONE line: the check's time in the display time zone, any trades (strategy, side, shares, price), any error, and CONTINUE or END RUN with the reason (market holiday, or 3 consecutive data errors). For example: `08:37 PST — no trades, no errors — CONTINUE`.
 
 ## 5. Per-check lines
 
 Log every check, one line per active strategy, including when it takes no action:
 
-`[HH:MM PT] SYMBOL bid/ask $x.xx/$x.xx | MACD 0.0000 / Sig 0.0000 / Hist ±0.0000 | Pos: none OR n sh @ $cost, peak $p, stop $s (reason) | Bal $x.xx (P&L ±$x.xx) | ACTION: BUY / SELL / NO ACTION — one-sentence reason`
+`[HH:MM TZ] SYMBOL bid/ask $x.xx/$x.xx | MACD 0.0000 / Sig 0.0000 / Hist ±0.0000 | Pos: none OR n sh @ $cost, peak $p, stop $s (reason) | Bal $x.xx (P&L ±$x.xx) | ACTION: BUY / SELL / NO ACTION — one-sentence reason`
 
+- `HH:MM TZ` is the check's time in the display time zone, with its abbreviation.
 - A rule set may add fields to this line. Its file says where.
 - On a BUY or SELL, append a second line to that strategy's log field. It explains which signal or stop triggered, and gives the trade's P&L.
 
@@ -92,8 +94,8 @@ Log every check, one line per active strategy, including when it takes no action
 
 ## 7. End of day
 
-The end-of-day step runs once, after the 1:00pm Pacific close. If today's day doc already has a `summary`, return it and do nothing else. Otherwise:
-1. Update the dashboard's CSV files, the only time in the day this happens, with open positions marked at the close, as `irrm-dashboard` describes.
+The end-of-day step runs once per session date, after the close, or at the end of the operating hours if they end before the close. If today's day doc already has a `summary`, return it and do nothing else. Otherwise:
+1. Update the dashboard's CSV files, the only time in the day this happens, with open positions marked at the close (or at the latest price, before the close), as `irrm-dashboard` describes.
 2. Write the summary described in `irrm-summary` into today's day doc `summary` field.
 3. Return the summary. The loop makes it the final message and ends the run.
 

@@ -2,6 +2,8 @@
 
 This schema does not name any particular strategy or symbol. "Each active strategy" means each row of the active strategies list. That row gives the strategy's id, symbol, rule set, state doc and log field.
 
+Every time field and every time in a doc id is UTC, as `CONFIG.md` (Time keeping) requires. "ISO" below means ISO 8601 UTC with a `Z`. Docs written before that rule may carry another offset, so compare times as instants.
+
 ## Versioning
 
 - Keep each doc's `version`, and pass it as `if_version` on every write. Use the new version that each write returns.
@@ -13,8 +15,9 @@ This schema does not name any particular strategy or symbol. "Each active strate
 ### Doc "check": bot-wide fields
 - `updated_at`: ISO UTC time of the last completed check. Used to detect missed checks.
 - `consecutive_errors`: the number of data errors in a row. Reset to 0 after a good check.
+- `display_time_zone`: the display time zone setting the last check ran with, as an IANA name. The dashboard page shows times in it.
 
-If the doc is missing, create it with `updated_at` null and `consecutive_errors` 0. While `updated_at` is null, there are no missed checks to log.
+If the doc is missing, create it with `updated_at` null, `consecutive_errors` 0 and the current display time zone. While `updated_at` is null, there are no missed checks to log.
 
 ### One state doc per active strategy (named in its row)
 
@@ -26,7 +29,7 @@ Common fields:
 - `realized_pnl`
 - `position` (null or an object, see below)
 - `check_count`
-- `last_sell_time` (ISO, null if none)
+- `last_sell_time` (ISO UTC, null if none)
 - `updated_at` (ISO UTC)
 
 The strategy's rule set may add more fields.
@@ -47,7 +50,7 @@ Common fields:
 - `shares`
 - `cost_price`
 - `cost_basis`
-- `entry_time`
+- `entry_time` (ISO UTC)
 - `peak_price`
 - `last_bid`
 
@@ -55,7 +58,7 @@ Fields for rule sets that keep stops:
 - `stop_price`
 - `stop_reason`
 - `stops` (every stop level)
-- `stop_order: {type: "stop", trigger, placed_at, modified_at}`
+- `stop_order: {type: "stop", trigger, placed_at, modified_at}`, both times ISO UTC
 
 The rule set defines its extra position fields, the keys of `stops`, and the values of `stop_reason`.
 
@@ -77,13 +80,13 @@ Update:
 
 ## Collection "days": today's log
 
-- **Doc id:** today's date as YYYY-MM-DD (Pacific).
-- **Fields:** `{date, summary: "", <log field>: [lines…] for each active strategy}`.
+- **Doc id:** the session date, YYYY-MM-DD (`CONFIG.md`, Time keeping).
+- **Fields:** `{date, summary: "", <log field>: [lines…] for each active strategy}`. The log lines and the summary are text for people, so their times are in the display time zone.
 - Create it at the first check of the day. If it already exists without an active strategy's log field, add that field as an empty array.
 
 ## Collection "trades": one doc per paper trade
 
-- **Doc id:** `YYYYMMDD-HHMM-<strategy id>-<side>`, for example `20261019-0712-main-buy`.
+- **Doc id:** `YYYYMMDD-HHMM-<strategy id>-<side>`, with the trade's UTC date and time, for example `20261019-1412-main-buy`. Docs created before UTC ids were used carry a Pacific time; leave them as they are.
 - **Fields:**
   - `ts` (ISO UTC)
   - `strategy` (the strategy id)

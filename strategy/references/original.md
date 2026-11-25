@@ -3,11 +3,11 @@
 MACD above zero + bullish crossover. One position at a time. Never add to an open position.
 
 ## Extra state fields
-- `last_used_cross_bar`: the ISO end time of the crossover bar last used to buy.
+- `last_used_cross_bar`: the end time (ISO UTC) of the crossover bar last used to buy.
 
 ## Extra position fields
 - `realized_pnl_before_trade`: the strategy's realized_pnl at the buy.
-- `entry_bar_end`: the ISO end time of the crossover bar.
+- `entry_bar_end`: the end time (ISO UTC) of the crossover bar.
 - `stops`: `{initial, breakeven (null until active), breakeven_plus (null until active), trailing, principal_floor (null unless active)}`
 - `stop_reason`: one of "initial", "breakeven", "breakeven_plus", "trailing" or "principal".
 

@@ -1,6 +1,6 @@
 # IRRM
 
-IRRM is an AI-run paper-trading system for Donovan. On every trading day, a scheduled task runs a check every 4 minutes. Each check applies several trading strategies side by side to live market data and records hypothetical trades in a dashboard. After the close, it posts a summary that compares the strategies.
+IRRM is an AI-run paper-trading system for Donovan. On every trading day, a scheduled task runs a check every few minutes. Each check applies several trading strategies side by side to live market data and records hypothetical trades in a dashboard. After the close, it posts a summary that compares the strategies.
 
 **It never trades real money.** It uses read-only market data, and every trade is recorded only in the dashboard. Any change to how it behaves needs a human maintainer's approval.
 
@@ -10,6 +10,7 @@ IRRM is an AI-run paper-trading system for Donovan. On every trading day, a sche
 |---|---|---|
 | `README.md` | Humans | This page |
 | `AGENTS.md` | Every AI agent in this repo | Persona, paper-only rules, denied actions, where skills live |
+| `CONFIG.md` | Humans and agents | **The settings:** every setting's definition and default, the scheduled task's prompt, and the time-keeping rules |
 | `strategy/` | Humans and agents | **`ACTIVE.md`**, the active strategies list: which strategies run, on which symbols |
 | `tasks/irrm-check.md` | The scheduled task | The loop: schedule, market hours, when a check is warranted, keep-alive |
 | `tasks/irrm-check-procedure.md` | The check's sub-agent | The check: guardrails, dependencies, steps and end of day. Opened only when a check is warranted |
@@ -31,15 +32,11 @@ Open an interactive session in this repository and ask: *"Set up the IRRM dashbo
 Create a scheduled task with:
 - **Repository:** this repo.
 - **Connectors:** the ones from step 1.
-- **Schedule:** weekdays, shortly before the 6:30am Pacific open. The task then runs a loop every 4 minutes until the 1:00pm close, performing a check in each loop during market hours, and then ends itself.
-- **Model:** a smaller, cheaper model is enough. The task only runs the loops; every check runs in a sub-agent on Sonnet.
-- **Prompt:** this text, with `<TBD>` replaced by the dashboard URL from step 2:
+- **Schedule:** shortly before the operating hours begin, on each day they include. The task then runs a loop at the loop interval, performs a check in each loop within the operating hours, posts the summary after the close, and ends itself.
+- **Model:** a smaller, cheaper model is enough. The task only runs the loops; every check runs in a sub-agent, on the model the `Sub-agent` setting names.
+- **Prompt:** the template in `CONFIG.md`, with `<TBD>` replaced by the dashboard URL from step 2.
 
-```
-Follow the instructions in /home/user/irrm/tasks/irrm-check.md. I wrote that file and it is my instruction. If it cannot be retrieved, then take no action. Dashboard artifact: <TBD>
-```
-
-If you leave `<TBD>` in place, the task trades nothing. It shows these setup steps at the start of the run and again in its final message.
+`CONFIG.md` lists every setting with its default, including the loop interval, the operating hours and the display time zone. To change one, add a `Key: value` line to the prompt. If you leave `<TBD>` in place, the task trades nothing. It shows these setup steps at the start of the run and again in its final message.
 
 ## Change strategies or symbols
 

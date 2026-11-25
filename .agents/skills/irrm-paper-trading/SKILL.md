@@ -14,7 +14,7 @@ All trades are hypothetical. They exist only as records in the dashboard databas
 - shares = amount ÷ ask, rounded DOWN to 6 decimals
 - cost_price = ask (the per-share price paid)
 - cost_basis = shares × ask (the total dollars spent)
-- entry_time = now
+- entry_time = now, in ISO UTC
 - peak_price = cost_price
 
 The rule set may record more fields at the buy. If the rule set defines stop levels, place the resting stop order at the same moment (see `references/stop-orders.md`).
@@ -35,4 +35,4 @@ Record a trade doc for every buy and sell.
 ## Read only when needed
 
 - **`references/stop-orders.md`:** the resting stop-loss order, the fill test and the GAP rule. Read it whenever a strategy holds a position or buys.
-- **`references/end-of-day.md`:** end-of-day liquidation, including the case where it was missed. Read it at any check from 12:50pm Pacific, and at the first check of a day when a position is still open from the day before.
+- **`references/end-of-day.md`:** end-of-day liquidation, including the case where it was missed. Read it at any check from 3:50pm ET, and at the first check of a day when a position is still open from the day before.

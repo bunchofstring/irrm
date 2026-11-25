@@ -5,7 +5,7 @@ description: How IRRM computes MACD, the bullish crossover, EMA200, RSI14 and AT
 
 # IRRM indicators
 
-Compute indicators in Python (through Bash). Use only the closes and ranges of **completed** 5-minute regular-hours bars (6:30am–1:00pm Pacific). Never use the bar that is still forming. Use at least 400 completed bars, which is about 5 sessions; span previous sessions as needed.
+Compute indicators in Python (through Bash). Use only the closes and ranges of **completed** 5-minute bars from the regular session (`CONFIG.md`, Time keeping). Never use the bar that is still forming. Use at least 400 completed bars, which is about 5 sessions; span previous sessions as needed.
 
 Every EMA is a standard EMA with alpha = 2/(n+1).
 

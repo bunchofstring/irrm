@@ -4,14 +4,14 @@ The dashboard's charts read two CSV files attached to the dashboard artifact. Up
 
 | Dataset doc | File | One row per |
 |---|---|---|
-| `datasets/daily_pnl` | `daily_pnl.csv` | Pacific trading day and active strategy |
-| `datasets/hourly_pnl` | `hourly_pnl.csv` | hour (PT, hour ending) and active strategy |
+| `datasets/daily_pnl` | `daily_pnl.csv` | session (UTC date) and active strategy |
+| `datasets/hourly_pnl` | `hourly_pnl.csv` | hour (hour ending, UTC) and active strategy |
 
 Each dataset doc holds the file's current location in `source.url` (`/_blob/<asset id>`), its file name in `source.name`, and `updated: {at, by}`.
 
 ## Columns
 
-Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl`. Open P&L is `(mark − cost_price) × shares` for a strategy's open position, and 0 with no position. Take `strategy_name` from the "name" column of the active strategies list.
+Times follow `CONFIG.md` (Time keeping): `date` is the session's UTC date, and every timestamp is ISO 8601 UTC. The page renders them in the display time zone. Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl`. Open P&L is `(mark − cost_price) × shares` for a strategy's open position, and 0 with no position. Take `strategy_name` from the "name" column of the active strategies list.
 
 `daily_pnl.csv`: `date,strategy,strategy_name,day_pnl,cum_pnl,trades,wins,losses,open_pnl,total_pnl`
 - `day_pnl`: the sum of that day's sell P&L
@@ -20,8 +20,8 @@ Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl
 - `open_pnl`: open P&L, marked at the day's close
 - `total_pnl`: `cum_pnl + open_pnl`
 
-`hourly_pnl.csv`: `date,hour,strategy,strategy_name,hour_pnl,cum_pnl,day_cum_pnl,trades,wins,losses,total_pnl`
-- `hour`: the hour ending, `07:00` (covering 6:30–7:00am) through `13:00`
+`hourly_pnl.csv`: `date,hour_end,strategy,strategy_name,hour_pnl,cum_pnl,day_cum_pnl,trades,wins,losses,total_pnl`
+- `hour_end`: the end of the hour, ISO UTC. The session's hours end at each full hour after the open, and at the close. The first covers the half hour from the open.
 - `hour_pnl`: the sum of that hour's sell P&L
 - `cum_pnl`: realized P&L since the start, through that hour; `day_cum_pnl`: the same for that day only
 - `trades`, `wins`, `losses`: as in the daily file, for that hour
@@ -32,7 +32,7 @@ Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl
 1. **Download** the current files from the two dataset docs' `source.url`. Save them to disk and work on them with Python, not in your context.
 2. **Add the missing days.** Keep every existing row exactly as it is. For each trading day after the last day in the files, through today, add rows built from that day's trade docs and closing prices, and today's from the state docs too:
    - daily: one row per active strategy, with open positions marked at that day's close
-   - hourly: one row per active strategy for each hour ending from `07:00` through `13:00`
+   - hourly: one row per active strategy for each hour end of that session
    - A strategy new to the active list starts with `cum_pnl` 0.
 
    Normally this is just today. A day is missing only when an earlier end-of-day update failed.
@@ -41,3 +41,5 @@ Money is in dollars, rounded to 6 decimals. A sell's P&L is its trade doc's `pnl
 5. **Delete the old assets** after that write succeeds, so old files don't pile up. If it fails, delete the new assets instead.
 
 On a market holiday, add no rows.
+
+**An hourly file in the old format.** Before UTC storage, `hourly_pnl.csv` had an `hour` column in Pacific time instead of `hour_end`. If the downloaded file still has it, the dashboard page hasn't been migrated yet. Leave the hourly file and its dataset doc unchanged, update only the daily file, and say in the summary that the dashboard needs the migration in `setup.md`. The first end-of-day step after the migration adds the missing hourly rows.

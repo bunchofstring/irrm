@@ -4,16 +4,16 @@ These follow common institutional backtesting practice and the GIPS valuation an
 
 ## Data
 
-- `minute_bars`: 1-minute regular-hours bars. `ts` is the bar's **start** time in UTC, so the bar stamped 12:40 PT covers 12:40:00–12:41:00. Its open is the first price after 12:40:00, and it is completed at 12:41. Convert to Pacific with `America/Los_Angeles`.
+- `minute_bars`: 1-minute regular-hours bars. `ts` is the bar's **start** time in UTC, so the bar stamped 19:40:00Z covers 19:40:00–19:41:00Z. Its open is the first price after 19:40:00Z, and it is completed at 19:41:00Z. Work in UTC throughout, as `CONFIG.md` (Time keeping) describes. Rule sets give times as offsets from each session's open or close. Render times in the report in the display time zone.
 - `daily_bars`: daily regular-hours bars, split-adjusted. `close` is the official close.
 - `earnings_dates`: earnings report dates.
 
 Get dividends (ex-date and amount) and the 3-month Treasury bill yield from a read-only market-data tool, for example Alpha Vantage `DIVIDENDS` and `TREASURY_YIELD` (maturity 3month).
 
-Build 5-minute bars from the 1-minute bars when needed. Check coverage first: each full day has 390 1-minute bars and each half day has 211 (last bar 09:59 PT). Treat a day with any other count as a data gap and report it. Never fill a gap with data from outside the bar's time.
+Build 5-minute bars from the 1-minute bars when needed. Check coverage first: each full day has 390 1-minute bars and each half day has 210 (the last starts one minute before the close). Treat a day with any other count as a data gap and report it. Never fill a gap with data from outside the bar's time.
 
 ## Check grid
-- Checks run at Pacific clock times every 4 minutes from 06:30 (06:30, 06:34, …), plus the start time of every time window a rule set names (for example 09:00, 12:40, 12:50). The last check of a day is the last grid time before the close (13:00, or 10:00 on half days).
+- Checks run from each session's open (`CONFIG.md`, Time keeping), one loop interval apart, plus the start time of every time window a rule set names (for example `open + 2h30m`, `close − 20m`, `close − 10m`). The loop interval is its default in `CONFIG.md`, unless the human names another. The last check of a day is the last grid time before the close, including on half days.
 - A rule that fires "at the first check at or after T" fires at T. A rule limited to a window fires at the first check in that window.
 
 ## No look-ahead
@@ -63,6 +63,6 @@ For each rule set and its benchmark, side by side:
 - **Against the benchmark:** beta, annualized alpha, correlation and information ratio, from daily returns
 - **Trading:** number of trades (closed and open), hit rate, average win and average loss, profit factor (gross wins ÷ gross losses), largest loss, mean trade return with its t-statistic, and time in the market (the share of regular-session minutes and the share of nights with an open position)
 - **Money:** ending balance and total P&L in dollars, and P&L per trading day
-- **Setup:** the conventions version, the range (first and last check), the cost `c`, data sources, any data gaps and any departures from the conventions
+- **Setup:** the conventions version, the range (first and last check), the loop interval of the check grid, the cost `c`, data sources, any data gaps and any departures from the conventions
 
 A backtest is evidence, not a forecast. Say what could make live results differ, such as fills, data quality or a regime the range does not cover.

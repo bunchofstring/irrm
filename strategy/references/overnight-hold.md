@@ -3,32 +3,32 @@
 Buys late in every session, holds overnight, and sells the next trading morning, with no indicator filter. One position at a time. Never add to an open position.
 
 ## Extra state fields
-- `last_used_signal_bar`: the ISO end time of the completed bar last used to buy. Default null.
+- `last_used_signal_bar`: the end time (ISO UTC) of the completed bar last used to buy. Default null.
 
 ## Extra position fields
-- `entry_date`: the Pacific trading date of the buy.
-- `entry_bar_end`: the ISO end time of the completed bar used to buy.
+- `entry_date`: the UTC date of the buy.
+- `entry_bar_end`: the end time (ISO UTC) of the completed bar used to buy.
 
 It defines no stop levels, so it places no resting stop order.
 
 ## BUY rule
 1. Only when the strategy has no open position.
-2. Only at a check whose time is between 12:40 and 12:49 Pacific (inclusive). The check takes no new positions from 12:50 onward. On half days, which close at 10:00 Pacific, it does not buy.
-3. Never reuse a signal bar: skip if the latest completed bar's end time equals last_used_signal_bar.
+2. Only at a check whose time is from `close − 20m` through `close − 11m` (inclusive). The check takes no new positions from `close − 10m` onward. On half days it does not buy.
+3. Never reuse a signal bar: skip if the latest completed bar's end time is the same instant as last_used_signal_bar.
 4. Make a paper BUY. Record entry_date and entry_bar_end, and set last_used_signal_bar.
 
 There is no EMA200 or other indicator condition.
 
 ## SELL rule
 1. Only when the strategy has an open position.
-2. At the first check at or after 9:00 Pacific on a trading day after entry_date, SELL at the current bid. The reason is "morning_exit".
+2. At the first check at or after `open + 2h30m` on a trading day after entry_date, SELL at the current bid. The reason is "morning_exit".
 3. There is no other exit.
 
 ## End-of-day liquidation
 Does NOT apply. Positions are held overnight by design.
 
 ## Log line additions
-- The Pos part shows entry_date and "sell from 09:00 next day".
+- The Pos part shows entry_date and "sell from open + 2h30m next session".
 
 ## Paper trial
 On QQQ, this rule set runs beside a QQQ buy-and-hold strategy, which is its benchmark. A human maintainer reviews it after 6 months of paper trading (about 125 trades):

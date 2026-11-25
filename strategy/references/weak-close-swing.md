@@ -5,17 +5,17 @@ Daily mean reversion. Buys AMZN late in a session that is closing weak, holds ov
 It uses the daily indicators in the "Daily indicators" section of `irrm-indicators`: RSI2 now, IBS now and SMA3 now.
 
 ## Extra state fields
-- `last_entry_date`: the Pacific trading date of the last buy. Default null.
+- `last_entry_date`: the UTC date of the last buy. Default null.
 
 ## Extra position fields
-- `entry_date`: the Pacific trading date of the buy.
+- `entry_date`: the UTC date of the buy.
 - `entry_rsi2`, `entry_ibs`: the signal values at the buy.
 
 It defines no stop levels, so it places no resting stop order.
 
 ## BUY rule
 1. Only when the strategy has no open position.
-2. Only at the first check at or after 12:40 Pacific, and before 12:50. On half days, which close at 10:00 Pacific, it does not buy.
+2. Only at the first check at or after `close − 20m`, and before `close − 10m`. On half days it does not buy.
 3. Only if last_entry_date is not today.
 4. Let P be the latest completed 1-minute close. BUY when both are true:
    - RSI2 now < 25
